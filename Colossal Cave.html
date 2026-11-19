@@ -1,0 +1,1707 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#151815">
+  <meta name="description" content="A first-person expedition inspired by the original Colossal Cave text adventure.">
+  <title>Colossal Cave — Bedquilt Expedition</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDQ4IDQ4IiBmaWxsPSJub25lIj4KICA8cmVjdCB4PSIuNSIgeT0iLjUiIHdpZHRoPSI0NyIgaGVpZ2h0PSI0NyIgcng9IjkiIGZpbGw9IiMyMzI1MWIiIHN0cm9rZT0iIzUyNTAzYSIvPgogIDxwYXRoIGQ9Ik03IDMzIDIwIDEybDYgOSA0LTUgMTEgMTdIN1oiIHN0cm9rZT0iI2UwYmQ3OCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJtMTggMzMgNi0xMCA2IDEwTTE3IDE3bDQgNCAzLTMiIHN0cm9rZT0iI2UwYmQ3OCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJNMTUgMzdoMTgiIHN0cm9rZT0iIzk1ODA1MSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=" type="image/svg+xml">
+  <style>
+:root {
+  color-scheme: dark;
+  --bg: #151815; --panel: #1b1e19; --border: #363a2e; --text: #eee9dc;
+  --muted: #aaa99a; --soft: #c8c7b5; --gold: #dfbc77; --green: #afbf8e;
+  --mono: "IBM Plex Mono", monospace; --sans: "Instrument Sans", system-ui, sans-serif;
+  --title: "Barlow Condensed", "Arial Narrow", Impact, sans-serif;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: radial-gradient(ellipse at 50% 0%, #20221a, var(--bg) 75%); color: var(--text); font: 14px/1.45 var(--sans); min-width: 300px; }
+button, input { font: inherit; }
+button { cursor: pointer; color: inherit; }
+button:focus-visible, input:focus-visible, canvas:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.shell { width: min(1460px, 100%); padding: 22px clamp(16px, 3vw, 46px) 14px; margin: auto; }
+.header, .brand, .header-actions, .field-head, .terminal-head, .terminal-head > div, .progress, .quick-actions, footer { display: flex; align-items: center; }
+.header { justify-content: space-between; gap: 15px; margin-bottom: 18px; }
+.brand { gap: 12px; }
+.brand img { flex: none; }
+h1,h2,p { margin: 0; }
+h1 { font: 700 34px/.92 var(--title); letter-spacing: .075em; }
+.subtitle { color: var(--gold); font: 500 9px/1.4 var(--mono); letter-spacing: .20em; margin-top: 6px; }
+.header-actions { gap: 8px; }
+.quiet, .map-button { background: #22251e; border: 1px solid var(--border); border-radius: 5px; color: var(--soft); padding: 7px 11px; font-size: 12px; white-space: nowrap; }
+.quiet:hover, .map-button:hover, .quick-actions button:hover { color: var(--gold); border-color: #796744; background: #323023; }
+.quiet > span:first-child { color: var(--gold); margin-right: 4px; }
+.help-icon { display: inline-grid; width: 14px; height: 14px; place-items: center; border: 1px solid #9b8254; border-radius: 50%; font: 10px/1 var(--mono); }
+.game { display: grid; grid-template-columns: minmax(0, 1fr) 258px; grid-template-rows: minmax(365px, min(56vh, 640px)) auto; gap: 12px; }
+.viewport { position: relative; isolation: isolate; overflow: hidden; background: #1d2319; border: 1px solid #454637; border-radius: 8px; }
+.viewport:fullscreen { border: 0; border-radius: 0; }
+#scene { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+#scene:active { cursor: grabbing; }
+.shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg,#0a0c0ac2,transparent 20%,transparent 66%,#090c09ed), radial-gradient(ellipse at center, transparent 45%, #05080755); }
+.view-top, .view-bottom { position: absolute; inset-inline: 0; display: flex; align-items: center; justify-content: space-between; padding: 14px 17px; pointer-events: none; }
+.view-top { top: 0; align-items: start; }
+.view-bottom { bottom: 0; align-items: end; gap: 10px; }
+.camera-label, .depth, .location span { font: 500 10px/1.3 var(--mono); letter-spacing: .13em; color: #ead5a9; text-shadow: 0 1px 4px #000; }
+.camera-label { margin-top: 8px; color: #e1e4cd; white-space: nowrap; }
+.camera-label i { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: #c5d38b; box-shadow: 0 0 9px #b9d779a8; vertical-align: 1px; }
+.depth { padding-bottom: 4px; white-space: nowrap; }
+.location h2 { font: 600 clamp(29px, 3.3vw, 51px)/.95 var(--title); letter-spacing: .015em; text-shadow: 0 2px 12px #000; margin-top: 3px; }
+.compass { position: absolute; left: 50%; transform: translateX(-50%); width: min(31%, 245px); height: 42px; overflow: hidden; mask-image: linear-gradient(90deg, transparent, #000 17%, #000 83%, transparent); color: #f0eddc; font: 500 11px var(--mono); text-shadow: 0 1px 4px #171a14; }
+#bearings { position: absolute; inset: 0; }
+#bearings span { position: absolute; transform: translateX(-50%); text-align: center; line-height: 15px; }
+#bearings span::after { content: ""; display: block; width: 1px; height: 5px; margin: 2px auto; background: #e6e1c595; }
+.compass b { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); color: var(--gold); }
+.screen-button { pointer-events: auto; border: 1px solid #e9dfb440; background: #161a148f; border-radius: 4px; color: #f0ebd7; width: 32px; height: 30px; font: 21px/1 var(--sans); }
+.screen-button:hover { background: #34382a; }
+.crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font: 20px/1 var(--mono); color: #f1ebcd9c; text-shadow: 0 0 3px #111; pointer-events: none; }
+#markers { position: absolute; inset: 0; pointer-events: none; }
+.marker { position: absolute; display: flex; align-items: center; gap: 5px; transform: translate(-50%,-50%); border: 1px solid #e9d8a153; color: #f8e9c4; background: #10170de0; box-shadow: 0 2px 10px #05090580; padding: 3px 7px; pointer-events: auto; white-space: nowrap; border-radius: 3px; font: 500 10px/1.5 var(--mono); }
+.marker:hover { background: #3c3926; border-color: var(--gold); }
+.marker span { color: var(--gold); font-size: 10px; }
+.interact { position: absolute; left: 50%; bottom: 51px; transform: translateX(-50%); pointer-events: auto; background: #161a13ed; border: 1px solid #a18f5c; border-radius: 4px; padding: 6px 9px; font-size: 12px; white-space: nowrap; }
+.interact kbd { margin-right: 4px; color: var(--gold); }
+#fade { position: absolute; inset: 0; background: #0b100d; pointer-events: none; opacity: 0; }
+#fade.flash { animation: flash 390ms ease-out; }
+@keyframes flash { from { opacity: .72; } to { opacity: 0; } }
+.scene-fallback { position: absolute; top: 46%; left: 50%; width: min(85%, 320px); transform: translate(-50%,-50%); text-align: center; color: var(--soft); }
+.touch { display: none; }
+.field, .terminal { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; min-width: 0; }
+.field { grid-column: 2; grid-row: 1 / 3; display: flex; flex-direction: column; }
+.field-head { gap: 8px; padding: 13px 13px 12px; border-bottom: 1px solid var(--border); }
+.field-head h2, .terminal-head h2 { font: 600 19px/.95 var(--title); letter-spacing: .045em; }
+.field-icon, .prompt-icon { color: var(--gold); font: 500 17px/1 var(--mono); }
+.map-button { margin-left: auto; padding: 4px 7px; font-size: 11px; }
+.map-button span { color: var(--gold); }
+.mission, .pack, .controls { padding: 16px 14px; }
+.mission { border-bottom: 1px solid var(--border); }
+.eyebrow, #turns, #save-status { color: var(--muted); font: 500 10px/1.3 var(--mono); letter-spacing: .12em; }
+.mission p { margin: 8px 0 14px; color: var(--text); font-size: 14px; line-height: 1.48; }
+.progress { gap: 9px; flex-wrap: wrap; }
+.progress-marks { display: flex; gap: 3px; }
+.progress-marks i { width: 15px; height: 4px; border-radius: 2px; background: #434539; }
+.progress-marks i.filled { background: var(--gold); box-shadow: 0 0 8px #c8a55d52; }
+#score { font: 10px var(--mono); color: var(--gold); white-space: nowrap; }
+.pack { flex: 1; }
+.pack .eyebrow { display: flex; justify-content: space-between; }
+#item-count { color: var(--gold); }
+.inventory { display: grid; gap: 5px; margin-top: 8px; }
+.empty { color: var(--muted); border: 1px dashed #434639; border-radius: 4px; padding: 9px 8px; font-size: 12px; }
+.item { display: flex; align-items: center; width: 100%; gap: 6px; border: 1px solid #3e4134; background: #22251e; border-radius: 4px; padding: 4px 6px; text-align: left; font-size: 12px; }
+.item:hover { border-color: var(--gold); }
+.item b, .item em { color: var(--gold); font: 500 12px var(--mono); }
+.item b { width: 19px; text-align: center; }
+.item em { margin-left: auto; font-size: 9px; }
+.controls { border-top: 1px solid var(--border); }
+.controls > div:not(:first-child) { display: flex; align-items: center; justify-content: space-between; color: var(--soft); font-size: 12px; margin-top: 8px; }
+kbd { display: inline-block; min-width: 19px; text-align: center; padding: 1px 4px; border: 1px solid #484b3c; border-radius: 3px; background: #272a22; color: #dedcca; font: 500 10px/1.45 var(--mono); }
+.terminal { grid-column: 1; display: grid; grid-template-rows: auto 72px auto auto; }
+.terminal-head { justify-content: space-between; border-bottom: 1px solid var(--border); padding: 9px 13px; }
+.terminal-head > div { gap: 8px; }
+.log { overflow-y: auto; overscroll-behavior: contain; padding: 8px 13px 4px; font: 12px/1.5 var(--mono); scrollbar-color: #545743 transparent; }
+.log p { color: var(--soft); margin: 0 0 4px; }
+.log .command-echo { color: var(--gold); }
+.log .good { color: #c8da9f; }
+.log .hint { color: #e1c894; }
+.quick-actions { min-height: 31px; padding: 1px 13px 6px; gap: 5px; flex-wrap: wrap; }
+.quick-actions button { background: #24271f; border: 1px solid #414438; border-radius: 4px; color: var(--soft); padding: 2px 7px; font: 500 10px/1.5 var(--mono); }
+#command-form { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 12px; background: #121511; border-top: 1px solid var(--border); border-radius: 0 0 7px 7px; }
+#command-form:focus-within { box-shadow: inset 0 0 0 1px #aa9058; }
+.prompt { color: var(--gold); font: 500 22px/1 var(--mono); }
+#command { flex: 1; min-width: 0; background: none; border: 0; color: var(--text); font: 13px var(--mono); padding: 5px 2px; }
+#command:focus { outline: none; }
+#command::placeholder { color: #a6a999; }
+.send, .primary { background: #dbb973; border: 1px solid #edce8d; border-radius: 4px; color: #231e14; padding: 5px 10px; font: 700 12px var(--sans); }
+.send:hover, .primary:hover { background: #f2d18e; }
+.send span { margin-left: 3px; }
+footer { justify-content: space-between; gap: 12px; color: var(--muted); margin-top: 10px; font-size: 11px; }
+#save-status { text-align: right; font-size: 9px; }
+dialog { width: min(530px, calc(100% - 28px)); color: var(--text); padding: 0; border: 1px solid #5d5d46; border-radius: 9px; background: #1c2019; box-shadow: 0 20px 80px #000a; }
+dialog::backdrop { background: #070a08b9; backdrop-filter: blur(4px); }
+.dialog-head { display: flex; justify-content: space-between; align-items: center; padding: 13px 17px; border-bottom: 1px solid var(--border); }
+.dialog-head h2 { font: 600 29px var(--title); }
+#dialog-body { padding: 15px 17px 18px; }
+#dialog-body p { margin-bottom: 12px; color: var(--soft); }
+#dialog-body p:last-child { margin-bottom: 0; }
+#dialog-body strong { color: var(--gold); }
+.dialog-actions { display: flex; gap: 8px; margin-top: 12px; }
+.map-grid { display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, minmax(34px, auto)); gap: 3px; margin: 0 0 13px; }
+.map-room { align-content: center; color: var(--soft); padding: 3px; border: 1px solid #4c4f3e; border-radius: 4px; background: #252a20; text-align: center; font: 500 9px/1.3 var(--mono); }
+.map-room.current { color: var(--gold); border-color: var(--gold); }
+@media (max-width: 900px) { .game { grid-template-columns: minmax(0, 1fr) 207px; } .shell { padding-inline: 16px; } }
+@media (max-width: 680px) {
+  .shell { padding: 12px 10px; } .header { margin-bottom: 10px; }
+  h1 { font-size: 28px; } .brand { gap: 7px; } .brand img { width: 34px; height: 34px; } .subtitle { font-size: 8px; letter-spacing: .10em; }
+  .header-actions { gap: 4px; } .header-actions button { padding: 5px 6px; font-size: 10px; }
+  .game { grid-template-columns: minmax(0,1fr); grid-template-rows: max(280px, 48svh) auto auto; gap: 8px; }
+  .terminal { grid-row: 2; } .field { grid-column: 1; grid-row: 3; }
+  .field-head, .mission, .pack { padding: 9px 12px; } .controls { display: none; }
+  .camera-label { font-size: 8px; } .view-top, .view-bottom { padding-inline: 10px; }
+  .inventory { grid-template-columns: repeat(auto-fit,minmax(125px,1fr)); }
+}
+@media (pointer: coarse) {
+  .touch { position: absolute; right: 10px; bottom: 45px; display: grid; grid-template-columns: repeat(3, 29px); gap: 2px; }
+  .touch button { width: 29px; height: 27px; background: #151911cb; border: 1px solid #e1d3a86e; border-radius: 4px; color: #e9dfc6; font-size: 10px; touch-action: none; }
+  .touch button:nth-child(1) { grid-area: 2 / 1; } .touch button:nth-child(2) { grid-area: 1 / 2; } .touch button:nth-child(3) { grid-area: 2 / 2; } .touch button:nth-child(4) { grid-area: 2 / 3; }
+}
+@media (prefers-reduced-motion: reduce) { #fade.flash { animation: none; } }
+
+</style>
+</head>
+<body>
+  <main class="shell">
+    <header class="header">
+      <div class="brand">
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDQ4IDQ4IiBmaWxsPSJub25lIj4KICA8cmVjdCB4PSIuNSIgeT0iLjUiIHdpZHRoPSI0NyIgaGVpZ2h0PSI0NyIgcng9IjkiIGZpbGw9IiMyMzI1MWIiIHN0cm9rZT0iIzUyNTAzYSIvPgogIDxwYXRoIGQ9Ik03IDMzIDIwIDEybDYgOSA0LTUgMTEgMTdIN1oiIHN0cm9rZT0iI2UwYmQ3OCIgc3Ryb2tlLXdpZHRoPSIxLjciIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJtMTggMzMgNi0xMCA2IDEwTTE3IDE3bDQgNCAzLTMiIHN0cm9rZT0iI2UwYmQ3OCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KICA8cGF0aCBkPSJNMTUgMzdoMTgiIHN0cm9rZT0iIzk1ODA1MSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+Cjwvc3ZnPgo=" alt="" width="46" height="46">
+        <div><h1>COLOSSAL CAVE</h1><div class="subtitle">THE BEDQUILT EXPEDITION</div></div>
+      </div>
+      <div class="header-actions">
+        <button id="audio" class="quiet" type="button" aria-pressed="false"><span aria-hidden="true">◖))</span> <span id="audio-label">Sound off</span></button>
+        <button id="help" class="quiet" type="button"><span class="help-icon" aria-hidden="true">?</span> Help</button>
+      </div>
+    </header>
+    <div class="game">
+      <section class="viewport" aria-label="First-person cave view" id="viewport">
+        <canvas id="scene" tabindex="0" aria-label="First-person scene. Use W A S D to walk and arrow keys to look."></canvas>
+        <div class="shade"></div>
+        <div class="view-top">
+          <div class="camera-label"><i></i> EXPLORER VIEW</div>
+          <div class="compass" aria-label="Facing east"><div id="bearings"></div><b>▾</b></div>
+          <button id="fullscreen" class="screen-button" aria-label="Toggle fullscreen" type="button"><span aria-hidden="true">⛶</span></button>
+        </div>
+        <div class="crosshair" aria-hidden="true">+</div>
+        <div id="markers"></div>
+        <div class="view-bottom">
+          <div class="location"><span id="region">THE SURFACE</span><h2 id="location">End of the Road</h2></div>
+          <button id="interact" class="interact" type="button" hidden></button>
+          <div id="depth" class="depth">000 m</div>
+        </div>
+        <div id="touch" class="touch" aria-label="Touch movement">
+          <button data-key="a" aria-label="Strafe left">◀</button><button data-key="w" aria-label="Walk forward">▲</button><button data-key="s" aria-label="Walk backward">▼</button><button data-key="d" aria-label="Strafe right">▶</button>
+        </div>
+        <div id="fade"></div>
+      </section>
+      <aside class="field" aria-label="Expedition field notes">
+        <div class="field-head"><span class="field-icon" aria-hidden="true">▤</span><h2>Field Notes</h2><button id="map" type="button" class="map-button">Map <span aria-hidden="true">↗</span></button></div>
+        <section class="mission">
+          <div class="eyebrow">OBJECTIVE</div>
+          <p id="objective"></p>
+          <div class="progress"><div class="progress-marks" id="progress-marks" aria-hidden="true"><i></i><i></i><i></i></div><span id="score">0 / 3 recovered</span></div>
+        </section>
+        <section class="pack">
+          <div class="eyebrow">INVENTORY <span id="item-count">00</span></div>
+          <div id="inventory" class="inventory"></div>
+        </section>
+        <section class="controls">
+          <div class="eyebrow">CONTROLS</div>
+          <div><span><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></span><span>Move</span></div>
+          <div><span><kbd>Drag</kbd> <kbd>←</kbd> <kbd>→</kbd></span><span>Look</span></div>
+          <div><span><kbd>E</kbd></span><span>Interact</span></div>
+          <div><span><kbd>/</kbd></span><span>Command</span></div>
+        </section>
+      </aside>
+      <section class="terminal" aria-label="Adventure command log">
+        <div class="terminal-head"><div><span class="prompt-icon" aria-hidden="true">›_</span><h2>Adventure Log</h2></div><span id="turns">TURN 000</span></div>
+        <div id="log" class="log" role="log" aria-live="polite" aria-relevant="additions"></div>
+        <div id="actions" class="quick-actions" aria-label="Suggested commands"></div>
+        <form id="command-form" autocomplete="off">
+          <label for="command" class="prompt" aria-label="Command">›</label>
+          <input id="command" aria-label="Text command" placeholder="Type a command…" spellcheck="false" autocapitalize="off" maxlength="100">
+          <button class="send" type="submit">Enter <span aria-hidden="true">↵</span></button>
+        </form>
+      </section>
+    </div>
+    <footer><span>Inspired by the text adventure by Will Crowther and Don Woods.</span><span id="save-status">PROGRESS SAVED ON THIS DEVICE</span></footer>
+  </main>
+  <dialog id="dialog"><div class="dialog-head"><h2 id="dialog-title"></h2><form method="dialog"><button class="quiet" aria-label="Close">✕</button></form></div><div id="dialog-body"></div></dialog>
+<script>
+(function () {
+  "use strict";
+
+  const directions = {
+    north: [0, -1], east: [1, 0], south: [0, 1], west: [-1, 0],
+    down: [0, 1], up: [0, -1]
+  };
+  const opposite = { north: "south", east: "west", south: "north", west: "east", down: "up", up: "down" };
+  const rooms = {
+    road: {
+      name: "End of the Road", region: "The surface", depth: 0, map: [1, 1], size: [12, 11],
+      start: [-7.8, 2.8, 1.27], exits: { east: "well", south: "stream" },
+      text: "An old road ends in a clearing. A stone wellhouse stands to the east. You hear water to the south.",
+      hint: "Start at the wellhouse. Its previous visitors left supplies.",
+    },
+    well: {
+      name: "Wellhouse", region: "The surface", depth: 0, map: [2, 1], size: [7, 6],
+      exits: { west: "road" },
+      text: "A stone well fills the back of the house. An old brass tally marks this as the expedition cache.",
+      hint: "Bring treasure here and use DROP to register each piece in the cache.",
+    },
+    stream: {
+      name: "Streambed", region: "The surface", depth: 2, map: [1, 2], size: [10, 12],
+      exits: { north: "road", south: "grate" },
+      text: "The stream slows among mossy rocks, then vanishes into a crevice. A footpath follows it south.",
+      hint: "Follow the footpath south to where the water disappears.",
+    },
+    grate: {
+      name: "The Grate", region: "The surface", depth: 5, map: [1, 3], size: [9, 10],
+      exits: { north: "stream", down: "debris" },
+      text: "A steel grate is set into the limestone. Cold air rises through its bars.",
+      hint: "The wellhouse keys fit the grate. You'll want a lit lamp before going down.",
+    },
+    debris: {
+      name: "Debris Room", region: "Upper passages", depth: 18, map: [1, 4], size: [10, 8],
+      exits: { up: "grate", east: "bird" },
+      text: "Floodwater has left a jumble of stone and driftwood. The passage bends east.",
+      hint: "Read the inscription on the wall. Something here might save you a long walk.",
+    },
+    bird: {
+      name: "Bird Chamber", region: "Upper passages", depth: 26, map: [2, 4], size: [9, 9],
+      exits: { west: "debris", south: "hall" },
+      text: "A spring drips into shallow pools. A high ledge looks out over the way south.",
+      hint: "An empty cage can hold a bird. The iron rod frightens it when you're holding it.",
+    },
+    hall: {
+      name: "Hall of the Mountain King", region: "Lower galleries", depth: 43, map: [2, 5], size: [12, 10],
+      exits: { north: "bird", east: "fissure" },
+      text: "Limestone columns climb into darkness. A low passage on the far side leads east.",
+      hint: "Bring a live bird here and RELEASE BIRD to clear the east passage.",
+    },
+    fissure: {
+      name: "Crystal Fissure", region: "Lower galleries", depth: 57, map: [3, 5], size: [10, 9],
+      exits: { west: "hall", east: "vault" },
+      text: "A black chasm splits the limestone floor. Crystal veins glitter along the far rim.",
+      hint: "Stand in the fissure chamber and WAVE ROD. The crystals react to the old iron.",
+    },
+    vault: {
+      name: "Calcite Vault", region: "Lower galleries", depth: 65, map: [4, 5], size: [9, 8],
+      exits: { west: "fissure" },
+      text: "Pale columns lean toward a still pool. The air is almost warm here.",
+      hint: "Take the crystal, then return all three treasures to the wellhouse cache.",
+    }
+  };
+
+  const items = {
+    keys: { name: "Brass keys", icon: "⚿", home: "well", point: [-2.6, .88, -2.35], detail: "A ring of old brass keys. One is cut to fit a heavy lock.", aliases: ["key", "brass key", "brass keys"] },
+    lamp: { name: "Carbide lamp", icon: "◉", home: "well", point: [-.6, .92, -2.35], detail: "A carbide lamp with enough fuel for the expedition. LIGHT LAMP to use it.", aliases: ["lantern", "carbide lamp"] },
+    cage: { name: "Wicker cage", icon: "▥", home: "well", point: [1.45, .94, -2.35], detail: "A small cage with a hinged door.", aliases: ["wicker cage", "birdcage"] },
+    rod: { name: "Iron rod", icon: "╱", home: "debris", point: [-1.5, .52, -2.1], detail: "An iron rod with a star filed into its tip. It hums faintly near crystal.", aliases: ["iron rod", "rusty rod", "black rod"] },
+    gold: { name: "Gold nugget", icon: "◆", home: "hall", point: [-3.4, .64, 1.1], detail: "A heavy nugget of native gold.", aliases: ["gold nugget", "nugget"], treasure: true },
+    silver: { name: "Silver ingot", icon: "▰", home: "fissure", point: [-3.4, .66, -2.5], detail: "An old silver bar with a worn maker's mark.", aliases: ["silver ingot", "ingot", "silver bar"], treasure: true },
+    crystal: { name: "Calcite crystal", icon: "◇", home: "vault", point: [3.2, .75, -.65], detail: "A flawless calcite specimen. Light bends through it in two directions.", aliases: ["calcite", "calcite crystal", "gem"], treasure: true }
+  };
+
+  const nouns = Object.fromEntries(Object.entries(items).flatMap(([id, item]) => [id, ...item.aliases].map(alias => [alias, id])));
+  const lookup = (dictionary, key) => Object.hasOwn(dictionary, key) ? dictionary[key] : undefined;
+  const shortDirections = { n: "north", e: "east", s: "south", w: "west", d: "down", u: "up", descend: "down", climb: "up", out: "out", exit: "out", back: "back", enter: "in" };
+  const mechanisms = {
+    grate: { name: "Steel grate", room: "grate", point: [0, .52, 6.8], icon: "▤" },
+    inscription: { name: "Inscription", room: "debris", point: [-4.4, 1.5, -3.55], icon: "▤" },
+    bird: { name: "Little bird", room: "bird", point: [1.2, 1.36, -3.25], icon: "✦" },
+    snake: { name: "Snake", room: "hall", point: [6, .55, 0], icon: "∿" },
+    chasm: { name: "Chasm", room: "fissure", point: [-.9, .35, 0], icon: "⋮" }
+  };
+
+  function newState() {
+    return {
+      version: 1, room: "road", previous: null, turns: 0, visited: ["road"],
+      locations: Object.fromEntries(Object.entries(items).map(([id, item]) => [id, item.home])),
+      placements: {}, lampLit: false, grateOpen: false, bird: "free", snakeGone: false,
+      bridge: false, learned: false
+    };
+  }
+
+  function loadState(storage) {
+    try {
+      const saved = JSON.parse(storage.getItem("bedquilt-progress-v1"));
+      if (saved?.version === 1 && rooms[saved.room] && Array.isArray(saved.visited) && saved.locations) {
+        return { ...newState(), ...saved };
+      }
+    } catch {}
+    return newState();
+  }
+
+  const has = (state, id) => state.locations[id] === "pack";
+  const light = state => state.lampLit && (has(state, "lamp") || state.locations.lamp === state.room);
+  const total = state => Object.keys(items).filter(id => items[id].treasure && state.locations[id] === "cache").length;
+  const movingInDark = state => rooms[state.room].depth > 5 && !light(state);
+  const carried = state => Object.keys(items).filter(id => has(state, id));
+
+  function objective(state) {
+    if (total(state) === 3) return "Expedition complete. All three treasures are secured in the wellhouse.";
+    if (carried(state).some(id => items[id].treasure)) return "Find the remaining treasures or return to the wellhouse and drop what you've collected.";
+    if (!state.visited.includes("debris")) return "Equip yourself at the wellhouse, then follow the stream to the cave entrance.";
+    return "Recover three treasures from the cave and bring them back to the wellhouse.";
+  }
+
+  function describe(state) {
+    const room = rooms[state.room];
+    if (movingInDark(state)) return "It's too dark to make out the room. Light your lamp.";
+    const details = [room.text];
+    const present = Object.keys(items).filter(id => state.locations[id] === state.room).map(id => items[id].name);
+    if (present.length) details.push("You see " + present.join(", ").toLowerCase() + ".");
+    if (state.room === "debris") details.push("There is an inscription on the wall.");
+    if (state.room === "bird" && state.bird === "free") details.push("A small bird watches you from a shelf.");
+    if (state.room === "hall" && !state.snakeGone) details.push("A snake guards the eastern passage.");
+    if (state.room === "fissure" && state.bridge) details.push("A crystal bridge spans the gap.");
+    return details.join(" ");
+  }
+
+  function block(state, direction) {
+    if (state.room === "grate" && direction === "down") {
+      if (!state.grateOpen) return "The steel grate is locked. Try OPEN GRATE with the keys.";
+      if (!has(state, "lamp") || !state.lampLit) return "It is pitch black below. Bring a lamp and light it before descending.";
+    }
+    if (state.room === "hall" && direction === "east" && !state.snakeGone) return "The snake coils across your path. You'll need a way to scare it off.";
+    if (state.room === "fissure" && direction === "east" && !state.bridge) return "The chasm is too wide to cross. Its crystal veins hum faintly.";
+    if (movingInDark(state) && direction !== "up" && rooms[state.room].exits[direction] !== state.previous) return "It's too dark to go farther. Try LIGHT LAMP or go back.";
+    return "";
+  }
+
+  function move(state, direction) {
+    const exits = rooms[state.room].exits;
+    if (direction === "back" || direction === "out") {
+      direction = Object.keys(exits).find(key => exits[key] === state.previous) || (Object.keys(exits).length === 1 ? Object.keys(exits)[0] : "");
+    }
+    if (direction === "in") direction = state.room === "road" ? "east" : state.room === "grate" ? "down" : "";
+    if (!lookup(exits, direction)) return { text: "There is no passage that way. Try EXITS." };
+    const reason = block(state, direction);
+    if (reason) return { text: reason, kind: "hint" };
+    const last = state.room;
+    state.room = exits[direction];
+    state.previous = last;
+    if (!state.visited.includes(state.room)) state.visited.push(state.room);
+    return { text: describe(state), moved: true, entry: opposite[direction] };
+  }
+
+  function noItem(id) { return { text: "There is no " + items[id].name.toLowerCase() + " within reach." }; }
+  function take(state, id) {
+    if (id === "bird") {
+      if (state.bird === "caged" && has(state, "cage")) return { text: "The bird is already in your cage." };
+      if (state.room !== "bird" || state.bird !== "free" || movingInDark(state)) return { text: "There is no bird here to catch." };
+      if (!has(state, "cage")) return { text: "The bird hops away before you can catch it. A cage would help.", kind: "hint" };
+      if (has(state, "rod")) return { text: "The bird flutters away from the iron rod. Set it down and try again.", kind: "hint" };
+      state.bird = "caged";
+      return { text: "You coax the bird into the cage and close its door.", kind: "good" };
+    }
+    if (has(state, id)) return { text: "You're already carrying it." };
+    if ((state.locations[id] !== state.room && !(state.room === "well" && state.locations[id] === "cache")) || (movingInDark(state) && id !== "lamp")) return noItem(id);
+    state.locations[id] = "pack";
+    delete state.placements[id];
+    return { text: "Taken. " + items[id].name + " added to your inventory.", kind: "good" };
+  }
+
+  function drop(state, id, position) {
+    if (id === "bird") return release(state);
+    if (!has(state, id)) return { text: "You aren't carrying that." };
+    if (items[id].treasure && state.room === "well") {
+      state.locations[id] = "cache";
+      if (total(state) === 3) return { text: "All three treasures are safe in the wellhouse. Expedition complete!", kind: "good", won: true };
+      return { text: items[id].name + " secured in the cache. " + total(state) + " of 3 recovered.", kind: "good" };
+    }
+    state.locations[id] = state.room;
+    if (position) state.placements[id] = [position.x, .24, position.z];
+    return { text: "You set down the " + items[id].name.toLowerCase() + "." };
+  }
+
+  function release(state) {
+    if (state.bird !== "caged" || !has(state, "cage")) return { text: "You aren't carrying a caged bird." };
+    if (state.room === "hall" && !state.snakeGone) {
+      state.snakeGone = true;
+      state.bird = "gone";
+      return { text: "The bird darts at the snake. Both vanish among the rocks, leaving the eastern passage clear.", kind: "good" };
+    }
+    state.bird = "free";
+    return { text: "The bird flies back toward its familiar perch." };
+  }
+
+  const aliases = { l: "look", i: "inventory", inv: "inventory", get: "take", grab: "take", catch: "take", examine: "inspect", x: "inspect", ignite: "light", stash: "drop", deposit: "drop", leave: "drop", unlock: "open", cross: "east" };
+
+  function execute(state, raw, position) {
+    const command = raw.toLowerCase().trim().replace(/[.!?]+$/, "").replace(/\b(?:the|a|an)\s+/g, "").replace(/\s+/g, " ");
+    if (!command) return { text: "" };
+    state.turns++;
+    const space = command.indexOf(" ");
+    let verb = space < 0 ? command : command.slice(0, space);
+    let noun = space < 0 ? "" : command.slice(space + 1);
+    verb = lookup(aliases, verb) || verb;
+    if (verb === "walk" || verb === "head" || verb === "go" || verb === "move") verb = noun;
+    const direction = lookup(shortDirections, verb) || verb;
+    if (lookup(directions, direction) || ["out", "back", "in"].includes(direction)) return move(state, direction);
+    if (verb === "look" && noun) { verb = "inspect"; noun = noun.replace(/^at /, ""); }
+    if (verb === "turn" && noun === "on lamp") { verb = "light"; noun = "lamp"; }
+    if (verb === "turn" && noun === "off lamp") { verb = "extinguish"; noun = "lamp"; }
+    if (verb === "say") verb = noun;
+    noun = noun.replace(/\s+with .+$/, "");
+    const id = lookup(nouns, noun) || noun;
+    const item = lookup(items, id);
+    const room = rooms[state.room];
+
+    switch (verb) {
+      case "look": return { text: describe(state) };
+      case "inventory": {
+        const names = carried(state).map(key => items[key].name + (key === "lamp" && state.lampLit ? " (lit)" : "") + (key === "cage" && state.bird === "caged" ? " (bird inside)" : ""));
+        return { text: names.length ? "Carrying " + names.join(", ") + "." : "Your pack is empty." };
+      }
+      case "score": return { text: total(state) + " of 3 treasures stored in the wellhouse." };
+      case "exits": return { text: "Passages lead " + Object.keys(room.exits).join(", ") + "." };
+      case "hint": return { text: state.room === "well" && !has(state, "lamp") ? "Take the lamp, keys, and cage from the wellhouse workbench." : room.hint, kind: "hint" };
+      case "help": return { text: "Try LOOK, EXITS, GO EAST, TAKE LAMP, INVENTORY, INSPECT, or HINT.", panel: "help" };
+      case "map": return { text: "You unfold your expedition map.", panel: "map" };
+      case "restart": case "reset": return { text: "Start a new expedition?", panel: "reset" };
+      case "take":
+        if (id === "all") {
+          const available = Object.keys(items).filter(key => state.locations[key] === state.room && (!movingInDark(state) || key === "lamp"));
+          return { text: available.length ? available.map(key => take(state, key).text).join(" ") : "There are no loose supplies here.", kind: available.length ? "good" : "" };
+        }
+        return item || id === "bird" ? take(state, id) : { text: "What do you want to take?" };
+      case "drop":
+        if (id === "all" || id === "treasure" || id === "treasures") {
+          const available = carried(state).filter(key => id === "all" || items[key].treasure);
+          const result = available.map(key => drop(state, key, position));
+          return { text: result.map(reply => reply.text).join(" ") || "You're carrying nothing to drop.", kind: state.room === "well" ? "good" : "", won: result.some(reply => reply.won) };
+        }
+        return item || id === "bird" ? drop(state, id, position) : { text: "What do you want to drop?" };
+      case "release": return id === "bird" ? release(state) : { text: "What do you want to release?" };
+      case "use":
+        if (id === "keys") return executeWithoutTurn(state, "open grate", position);
+        if (id === "lamp") return executeWithoutTurn(state, "light lamp", position);
+        if (id === "cage") return executeWithoutTurn(state, "take bird", position);
+        if (id === "rod") return executeWithoutTurn(state, "wave rod", position);
+        return { text: "Try naming an action, such as OPEN, LIGHT, or WAVE." };
+      case "light": case "extinguish":
+        if (id !== "lamp") return { text: "You can light or extinguish the lamp." };
+        if (!has(state, "lamp") && state.locations.lamp !== state.room) return noItem("lamp");
+        state.lampLit = verb === "light";
+        return { text: state.lampLit ? "The lamp catches with a steady, warm flame." : "You shut the lamp off.", kind: state.lampLit ? "good" : "" };
+      case "open":
+        if (id === "cage" && state.bird === "caged") return release(state);
+        if (!["grate", "gate"].includes(id) || state.room !== "grate") return { text: "Nothing here opens that way." };
+        if (state.grateOpen) return { text: "The grate is already open." };
+        if (!has(state, "keys")) return { text: "The grate is locked. You need a key.", kind: "hint" };
+        state.grateOpen = true;
+        return { text: "The brass key turns. You lift the grate and expose a ladder into the cave.", kind: "good" };
+      case "wave":
+        if (id !== "rod" || !has(state, "rod")) return { text: "You don't have a rod to wave." };
+        if (state.room !== "fissure") return { text: "The rod trembles briefly, then goes still." };
+        if (state.bridge) return { text: "The crystal bridge holds steady." };
+        state.bridge = true;
+        return { text: "A clear tone rings out. The veins knit into a crystal bridge across the chasm.", kind: "good" };
+      case "xyzzy":
+        if (!["well", "debris"].includes(state.room)) return { text: "Your voice echoes and falls quiet." };
+        if (state.room === "well" && (!state.visited.includes("debris") || !has(state, "lamp") || !state.lampLit)) return { text: "A draft stirs in the well. You'll need to know the other end and carry a lit lamp." };
+        state.previous = state.room;
+        state.room = state.room === "well" ? "debris" : "well";
+        if (!state.visited.includes(state.room)) state.visited.push(state.room);
+        return { text: "The air folds around you. " + describe(state), moved: true, kind: "good" };
+      case "read": case "inspect":
+        if (item && (has(state, id) || state.locations[id] === state.room)) return { text: item.detail };
+        if (["inscription", "wall", "note", "sign"].includes(id) && state.room === "debris" && !movingInDark(state)) {
+          state.learned = true;
+          return { text: "The letters spell XYZZY. Beneath them, someone has drawn a small well.", kind: "hint" };
+        }
+        if (id === "bird" && state.room === "bird" && state.bird === "free") return { text: "The bird seems tame, though it startles at sudden motion." };
+        if (id === "grate" && state.room === "grate") return { text: state.grateOpen ? "The grate has swung clear of the ladder." : "A heavy brass lock holds the grate shut." };
+        if (id === "snake" && state.room === "hall" && !state.snakeGone) return { text: "It raises its head whenever you approach the passage." };
+        if (id === "chasm" && state.room === "fissure") return { text: "The crystals at either side are threaded with dark iron." };
+        return { text: "You don't see anything like that here." };
+      default: return { text: "I didn't understand that. Try LOOK, EXITS, or HELP.", kind: "hint" };
+    }
+  }
+
+  function executeWithoutTurn(state, command, position) {
+    state.turns--;
+    return execute(state, command, position);
+  }
+
+  function portal(roomId, direction) {
+    const room = rooms[roomId];
+    const [x, z] = directions[direction];
+    return [x * (room.size[0] - .9), 1.15, z * (room.size[1] - .9)];
+  }
+
+  function props(state) {
+    const list = Object.keys(items).filter(id => state.locations[id] === state.room).map(id => ({
+      id, label: items[id].name, command: "take " + id, point: state.placements[id] || items[id].point
+    }));
+    for (const [id, thing] of Object.entries(mechanisms)) {
+      if (thing.room !== state.room || (id === "bird" && state.bird !== "free") || (id === "snake" && state.snakeGone)) continue;
+      const command = {
+        grate: state.grateOpen ? "down" : "open grate", inscription: "read inscription",
+        bird: "take bird", snake: has(state, "cage") && state.bird === "caged" ? "release bird" : "inspect snake",
+        chasm: has(state, "rod") && !state.bridge ? "wave rod" : "inspect chasm"
+      }[id];
+      list.push({ id, label: thing.name, command, point: thing.point });
+    }
+    return list;
+  }
+
+  function suggestions(state) {
+    const choices = {
+      road: [["go east", "Enter wellhouse"], ["go south", "Follow stream"]],
+      well: [["take all", "Take supplies"], ["go west", "Back to road"]],
+      stream: [["go south", "Follow stream"], ["go north", "Back to road"]],
+      grate: [[state.grateOpen ? "down" : "open grate", state.grateOpen ? "Descend" : "Open grate"], ["go north", "Back to stream"]],
+      debris: [[state.learned ? "xyzzy" : "read inscription", state.learned ? "XYZZY" : "Read inscription"], ["go east", "Go east"], ["up", "Climb out"]],
+      bird: [[state.bird === "free" ? "take bird" : "go south", state.bird === "free" ? "Catch bird" : "Go south"], ["go west", "Go west"]],
+      hall: [[state.snakeGone ? "go east" : "release bird", state.snakeGone ? "Go east" : "Release bird"], ["go north", "Go north"]],
+      fissure: [[state.bridge ? "go east" : "wave rod", state.bridge ? "Cross bridge" : "Wave rod"], ["go west", "Go west"]],
+      vault: [["go west", "Go west"]]
+    }[state.room].slice();
+    if (state.room === "well" && carried(state).some(id => items[id].treasure)) choices.unshift(["drop treasure", "Cache treasure"]);
+    if (state.room === "well" && (has(state, "lamp") || state.locations.lamp === "well") && !state.lampLit) choices.unshift(["light lamp", "Light lamp"]);
+    if (movingInDark(state)) choices.unshift(["light lamp", "Light lamp"]);
+    choices.push(["look", "Look"], ["hint", "Hint"]);
+    return choices;
+  }
+
+  globalThis.Cave = { rooms, items, directions, newState, loadState, execute, describe, light, total, carried, objective, props, suggestions, portal, block, movingInDark };
+})();
+
+(function () {
+  "use strict";
+
+  const TAU = Math.PI * 2;
+  const radians = degrees => degrees * Math.PI / 180;
+  const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
+  const rgb = hex => [0, 2, 4].map(offset => parseInt(hex.slice(offset, offset + 2), 16) / 255);
+  const add = (a, b) => a.map((value, i) => value + b[i]);
+  const sub = (a, b) => a.map((value, i) => value - b[i]);
+  const scale = (a, factor) => a.map(value => value * factor);
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const unit = v => scale(v, 1 / (Math.hypot(...v) || 1));
+  const outdoors = id => Cave.rooms[id].depth < 10 && id !== "well";
+  const ground = (id, x, z) => outdoors(id) ? Math.sin(x * .24 + z * .18) * .105 + Math.cos(z * .52 - x * .38) * .07 : 0;
+
+  function randomizer(name) {
+    let seed = [...name].reduce((value, letter) => Math.imul(31, value) + letter.charCodeAt(0), 401);
+    return () => {
+      seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+  }
+
+  class Mesh {
+    constructor(seed) {
+      this.vertices = [];
+      this.obstacles = [];
+      this.r = randomizer(seed);
+    }
+
+    tint(color, range = .17) {
+      const v = 1 + (this.r() - .5) * range;
+      return scale(typeof color === "string" ? rgb(color) : color, v);
+    }
+
+    tri(a, b, c, color, surface = 0, factor = .08) {
+      const normal = unit(cross(sub(b, a), sub(c, a)));
+      const tone = this.tint(color, factor);
+      for (const p of [a, b, c]) this.vertices.push(...p, ...normal, ...tone, surface);
+    }
+
+    quad(a, b, c, d, color, surface = 0, factor = .08) {
+      this.tri(a, b, c, color, surface, factor);
+      this.tri(a, c, d, color, surface, factor);
+    }
+
+    box(x, y, z, width, height, depth, color, surface = 0, angle = 0) {
+      const c = Math.cos(angle), s = Math.sin(angle);
+      const points = [[-1,-1,-1],[1,-1,-1],[1,-1,1],[-1,-1,1],[-1,1,-1],[1,1,-1],[1,1,1],[-1,1,1]].map(([u,v,w]) => {
+        const a = u * width / 2, b = w * depth / 2;
+        return [x + a*c - b*s, y + v*height/2, z + a*s + b*c];
+      });
+      for (const side of [[0,4,5,1],[1,5,6,2],[2,6,7,3],[3,7,4,0],[4,7,6,5],[0,1,2,3]]) this.quad(...side.map(i => points[i]), color, surface);
+    }
+
+    tube(a, b, r1, r2, color, surface = 0, faces = 8, roughness = 0) {
+      const axis = unit(sub(b, a));
+      const right = unit(cross(axis, Math.abs(axis[1]) > .9 ? [0,0,1] : [0,1,0]));
+      const up = cross(right, axis);
+      const first = [], second = [];
+      for (let i = 0; i < faces; i++) {
+        const angle = i / faces * TAU;
+        const offset = add(scale(right, Math.cos(angle)), scale(up, Math.sin(angle)));
+        const variation = 1 + (this.r() - .5) * roughness;
+        first.push(add(a, scale(offset, r1 * variation)));
+        second.push(add(b, scale(offset, r2 * variation)));
+      }
+      for (let i = 0; i < faces; i++) {
+        const next = (i + 1) % faces;
+        this.quad(first[i], second[i], second[next], first[next], color, surface, roughness * .36);
+        if (r1) this.tri(a, first[i], first[next], color, surface);
+        if (r2) this.tri(b, second[next], second[i], color, surface);
+      }
+    }
+
+    rock(x, y, z, sx, sy, sz, color, surface = 0, sides = 8) {
+      const rings = [];
+      const heading = this.r() * TAU;
+      for (const [height, radius] of [[-.54, .57],[-.23,1],[.33,.78],[.59,.35]]) {
+        rings.push(Array.from({length: sides}, (_, i) => {
+          const angle = heading + i / sides * TAU;
+          const r = radius * (.75 + this.r() * .47);
+          return [x + Math.sin(angle)*sx*r, y + (height+(this.r()-.5)*.37)*sy, z + Math.cos(angle)*sz*r];
+        }));
+      }
+      for (let i = 0; i < sides; i++) {
+        const next = (i + 1) % sides;
+        for (let level = 0; level < 3; level++) this.quad(rings[level][i], rings[level+1][i], rings[level+1][next], rings[level][next], color, surface, .23);
+        this.tri(rings[3][i], [x, y+sy*.65, z], rings[3][next], color, surface, .23);
+      }
+    }
+
+    trunk(x, y, z, width, height, color) {
+      this.tube([x,y,z], [x+width*.45,y+height,z-width*.16], width, width*.24, color, 2, 7, .46);
+    }
+
+    solid(x, z, width, depth) {
+      this.obstacles.push([x-width/2, x+width/2, z-depth/2, z+depth/2]);
+    }
+  }
+
+  function terrain(mesh, id, x0, x1, z0, z1, color, surface, step = 1.35, height = (x, z) => ground(id, x, z)) {
+    const nx = Math.ceil((x1-x0)/step), nz = Math.ceil((z1-z0)/step);
+    const point = (i, j) => {
+      const x = x0 + i/nx*(x1-x0), z = z0 + j/nz*(z1-z0);
+      return [x, height(x,z), z];
+    };
+    for (let i=0; i<nx; i++) {
+      for (let j=0; j<nz; j++) mesh.quad(point(i,j),point(i,j+1),point(i+1,j+1),point(i+1,j),color,surface,.15);
+    }
+  }
+
+  function fir(mesh, x, y, z, height, color) {
+    const width = height * (.17 + mesh.r()*.062);
+    const lean = (mesh.r()-.5)*width*.6;
+    mesh.trunk(x,y,z,width*.115,height*.94,"66553a");
+    for (let level=0; level<5; level++) {
+      const base = y + height*(.23 + level*.119);
+      const radius = width * (1 - level * .137);
+      const center = [x + lean * level/5, base, z];
+      const tip = [x + lean*(level+1)/5, base + height*(.39 - level*.027), z];
+      mesh.tube(center, tip, radius, .04, mesh.tint(color,.36), 3, 7, .76);
+    }
+  }
+
+  function grass(mesh, x, z, y, size, color) {
+    for (let n=0; n<5; n++) {
+      const u=x+(mesh.r()-.5)*size*.65, v=z+(mesh.r()-.5)*size*.65;
+      mesh.tri([u-size*.08,y,v],[u+size*.08,y,v],[u+(mesh.r()-.5)*size,y+size*(.45+mesh.r()*.65),v+(mesh.r()-.5)*size],color,3,.34);
+    }
+  }
+
+  function forest(mesh, id, state) {
+    const [w,d] = Cave.rooms[id].size;
+    terrain(mesh,id,-40,38,-40,38,"677050",1,2.6);
+    if (id === "road") {
+      terrain(mesh,id,-35,10,-1.68,1.7,"9b8b63",1,1.1,(x,z)=>ground(id,x,z)+.019);
+      terrain(mesh,id,-1.1,1.3,1.7,d+4,"948665",1,1.1,(x,z)=>ground(id,x,z)+.026);
+    } else {
+      terrain(mesh,id,-1.65,1.3,-d-3,d+3,"9a8c69",1,1.1,(x,z)=>ground(id,x,z)+.028);
+    }
+    for (let i=0; i<226; i++) {
+      const x=(mesh.r()-.5)*76, z=(mesh.r()-.5)*76;
+      if (Math.abs(x)<w+1.4 && Math.abs(z)<d+1.1) continue;
+      if (Math.abs(x)<2.8 || (id==="road" && Math.abs(z)<2.8)) continue;
+      fir(mesh,x,ground(id,x,z),z,5+mesh.r()*11,["385641","455c42","536747"][Math.floor(mesh.r()*3)]);
+    }
+    const trees = id === "road" ? [[-3.6,-3.5,8.3], [1.8,-5.6,10],[-8,-4.5,11.7],[2.9,5.7,9.7],[5.9,-6.4,7.8],[-8.4,6.2,10.5],[7.6,6.8,11.5],[13.4,-5.7,9.7],[1.9,9,6.5],[-3.2,5.5,7.4]] : [[-4,-4,8],[3.8,-5.8,10],[5,5,8],[-6,2,11],[3.5,7.6,9],[-5.9,8,10]];
+    for (const [x,z,h] of trees) {
+      fir(mesh,x,ground(id,x,z),z,h,mesh.tint("4b6848",.37));
+      mesh.solid(x,z,.62,.62);
+    }
+    for (let i=0; i<380; i++) {
+      const x=(mesh.r()-.5)*(w*2+8), z=(mesh.r()-.5)*(d*2+8);
+      if (Math.abs(x)<1.6 || (id==="road" && (Math.abs(z)<1.95 || (x>3 && Math.abs(z)<3.3)))) continue;
+      const y=ground(id,x,z);
+      grass(mesh,x,z,y,.14+mesh.r()*.57,mesh.tint(i%3 ? "778053" : "a09551",.43));
+      if (i%12===0) mesh.rock(x,y+.06,z,.21+mesh.r()*.89,.24+mesh.r()*.45,.35+mesh.r()*.7,"79816a");
+    }
+    for (let i=0; i<95; i++) {
+      const x=(mesh.r()-.5)*25,z=(mesh.r()-.5)*21;
+      if (mesh.r()<.47 && Math.abs(z)<1.3) continue;
+      mesh.rock(x,ground(id,x,z)+.012,z,.035+mesh.r()*.11,.035+mesh.r()*.06,.045+mesh.r()*.12,"a39778",0,5);
+    }
+    if (id === "road") {
+      house(mesh);
+      post(mesh,2.0,3.9,ground(id,2,3.9));
+      mesh.rock(-2.8,.26,-2.5,1.1,.82,.69,"7c8870");
+    } else {
+      for (let i=0; i<28; i++) {
+        const z=-d-1+i*.86, x=3.2+Math.sin(z*.15)*1.12;
+        mesh.quad([x-1.13,.032,z],[x-1.13,.033,z+.86],[x+1.3,.034,z+.86],[x+1.3,.031,z],"3d7771",5);
+        if (i%2===0) mesh.rock(x+1.25,.13,z,.64,.52,.7,"64775b");
+        if (i%3===0) mesh.rock(x-1.2,.16,z,.5,.43,.6,"697960");
+      }
+      if (id==="grate") grate(mesh, [0,.52,6.8],state.grateOpen);
+    }
+  }
+
+  function post(mesh,x,z,y) {
+    mesh.box(x,y+.67,z,.15,1.34,.17,"68604b",2);
+    mesh.box(x,y+1.11,z,.12,.34,.85,"847459",2,-.24);
+    mesh.box(x+.003,y+.86,z,.13,.14,.58,"847459",2,-.24);
+  }
+
+  function house(mesh) {
+    mesh.box(9.5,.03,0,9,.22,5.8,"666456");
+    const color = "7b7663";
+    mesh.box(9.6,1.37,-2.58,8.6,2.73,.42,color);
+    mesh.box(9.6,1.37,2.58,8.6,2.73,.42,color);
+    mesh.box(5.45,1.3,-1.72,.39,2.6,1.65,color);
+    mesh.box(5.45,1.3,1.72,.39,2.6,1.65,color);
+    mesh.box(5.45,2.52,0,.43,.45,2.12,color);
+    mesh.tri([5.23,2.64,-2.72],[5.23,2.64,2.72],[5.23,4.11,0],color);
+    mesh.box(13.6,1.5,0,.4,3,5.2,"625e4c");
+    mesh.box(5.59,1.09,-.89,.49,2.18,.17,"504537",2);
+    mesh.box(5.59,1.09,.89,.49,2.18,.17,"504537",2);
+    mesh.box(5.59,2.19,0,.51,.21,1.95,"594c38",2);
+    mesh.box(8.9,1.55,-1.36,.1,3.05,2.60,"2a2b23",2);
+    mesh.box(10,2.44,-1.11,1.2,.19,2.44,"635541",2);
+    mesh.box(5.21,1.45,1.8,.1,.78,.77,"3d382b",2);
+    mesh.box(5.14,1.44,1.8,.12,.53,.57,"a88753",4);
+    mesh.box(5.06,1.44,1.8,.05,.59,.065,"594833",2);
+    mesh.box(5.06,1.44,1.8,.05,.065,.61,"594833",2);
+    mesh.box(5.05,1.36,-1.16,.12,.30,.18,"b99a55",4);
+    for (let i=0; i<5; i++) {
+      for (let j=0; j<5; j++) {
+        const z=-2.34+j*.393+(i%2)*.08;
+        mesh.box(5.23,.35+i*.48,z,.09,.40,.36,mesh.tint(color,.28));
+        mesh.box(5.23,.35+i*.48,-z,.09,.40,.36,mesh.tint(color,.28));
+      }
+    }
+    for (const sign of [-1,1]) {
+      mesh.quad([4.95,2.66,3*sign],[14,2.66,3*sign],[14,4.2,0],[4.95,4.2,0],"625d40",2);
+      for (let row=0; row<10; row++) {
+        const k=row/10;
+        mesh.box(9.47,2.68+1.54*k,sign*(3-3*k),9.17,.075,.085,"5a5540",2);
+      }
+      mesh.box(9.36,2.64,3*sign,9.1,.17,.135,"463e2e",2);
+      mesh.solid(6.8,sign*1.85,3.2,1.89);
+      mesh.solid(10.1,sign*2.6,5.3,.5);
+    }
+    mesh.box(10.8,3.83,-1.23,.79,1.2,.81,"797262");
+    mesh.box(10.8,4.46,-1.23,.94,.15,.96,"686252");
+    mesh.box(5.34,2.85,0,.1,.24,1.31,"3f3d31",2);
+    mesh.box(4.95,.06,0,.61,.2,2.24,"8e8972");
+  }
+
+  function wellhouse(mesh) {
+    terrain(mesh,"well",-8,8,-7,7,"8b7c5e",1,1);
+    mesh.box(1.28,4.15,0,14, .33,12,"504836",2);
+    mesh.box(6.8,2,0,.48,4.1,12.3,"8b8370");
+    mesh.box(0,2,-5.73,14.0,4.1,.45,"8d826d");
+    mesh.box(0,2,5.73,14.0,4.1,.45,"817864");
+    mesh.box(-6.7,2,-3.55,.43,4.1,4.65,"827967");
+    mesh.box(-6.7,2,3.55,.43,4.1,4.65,"827967");
+    mesh.box(-6.7,3.35,0,.45,1.42,2.46,"827967");
+    mesh.box(-6.74,1.13,1.22,.53,2.25,.18,"4f452f",2);
+    mesh.box(-6.74,1.13,-1.22,.53,2.25,.18,"4f452f",2);
+    mesh.box(-6.79,2.27,0,.57,.25,2.62,"4f452f",2);
+    mesh.box(-7.18,1.18,0,.06,2.22,2.34,"9b9f70",4);
+    for (let j=0; j<18; j++) {
+      const x=-6.4+j*.75;
+      for (let k=0; k<6; k++) mesh.box(x+(k%2)*.29,.28+k*.64,-5.46,.71,.56,.23,mesh.tint("918671",.24));
+    }
+    for (let i=0; i<9; i++) mesh.box(-5.75+i*1.4,3.86,0,.26,.3,11.5,"514635",2);
+    mesh.box(-.5,.78,-2.35,5.48,.2,1.34,"796344",2);
+    for (const x of [-2.91,1.93]) {
+      for (const z of [-2.82,-1.89]) mesh.box(x,.37,z,.2,.75,.21,"695337",2);
+    }
+    mesh.solid(-.5,-2.35,5.47,1.34);
+    for (let i=0; i<17; i++) {
+      const angle=i/17*TAU;
+      const x=3.88+Math.sin(angle)*1.08, z=1.7+Math.cos(angle)*1.08;
+      mesh.box(x,.35,z,.44,.7,.48,mesh.tint("8d8671",.26),0,angle);
+      mesh.box(x,.74,z,.46,.16,.52,"a0997f",0,angle);
+    }
+    mesh.solid(3.88,1.7,2.5,2.5);
+    mesh.box(3.86,-.015,1.7,1.65,.055,1.65,"333d30",5);
+    mesh.box(5.97,.45,-2.66,.78,.9,1.44,"584c35",2);
+    mesh.box(5.91,.94,-2.66,.93,.16,1.58,"8f7447",2);
+    mesh.solid(5.97,-2.66,.80,1.45);
+    mesh.box(2.52,.87,-2.35,.23,.32,.27,"b69559",4);
+    mesh.box(2.52,.72,-2.35,.34,.09,.35,"474131",7);
+    mesh.box(2.52,1.04,-2.35,.28,.09,.29,"474131",7);
+  }
+
+  function arch(mesh, id, direction, color) {
+    const p=Cave.portal(id,direction);
+    const [dx,dz]=Cave.directions[direction], perp=[dz,0,-dx];
+    const center=[p[0]+dx*.18,0,p[2]+dz*.18];
+    const path=[[-2.1,0],[-2.02,1.23],[-1.5,2.47],[-.64,3.05],[.54,3.09],[1.45,2.43],[2.07,1.2],[2.11,0]];
+    const point=(u,y,forward) => add(add(center,scale(perp,u)),[dx*forward,y,dz*forward]);
+    for (let i=0;i<path.length-1;i++) {
+      const [u,y]=path[i],[v,h]=path[i+1];
+      mesh.quad(point(u,y,0),point(v,h,0),point(v*.75,h*.9,2.1),point(u*.75,y*.9,2.1),color);
+      if (i<4) mesh.rock(...point(u,y,.16),.35,.69,.45,color);
+    }
+    for (let i=0;i<path.length-1;i++) {
+      const [u,y]=path[i],[v,h]=path[i+1];
+      mesh.tri(point(u*.8,y*.92,2.8),point(v*.8,h*.92,2.8),point(0,.02,2.8),id==="debris"&&direction==="up"?"555e49":"111b1b",4);
+    }
+  }
+
+  function grotto(mesh, id, state) {
+    const [w,d]=Cave.rooms[id].size;
+    const color = {debris:"80716a",bird:"637c71",hall:"887966",fissure:"667784",vault:"7f8b84"}[id];
+    const floor = {debris:"777063",bird:"62736a",hall:"80745f",fissure:"67747b",vault:"6b8078"}[id];
+    if (id === "fissure") {
+      terrain(mesh,id,-w-.7,-1.95,-d-.6,d+.6,floor,0);
+      terrain(mesh,id,1.55,w+.7,-d-.6,d+.6,floor,0);
+      for (const x of [-1.95,1.55]) {
+        for (let i=0;i<14;i++) {
+          const z=-d+i*1.4;
+          mesh.quad([x,.02,z],[x,.02,z+1.4],[x*1.5,-5,z+1.61],[x*1.5,-5,z-.27],"374850",0,.4);
+        }
+      }
+      terrain(mesh,id,-2,1.7,-d,d,"263846",0,2,()=>-5.1);
+    } else terrain(mesh,id,-w-1,w+1,-d-1,d+1,floor,0,1.35);
+    const ceiling=(x,z)=> (id==="hall"?7.7:5.25)+Math.cos(x*.38)*.79+Math.sin(z*.51)*.66+(mesh.r()-.5)*.8;
+    terrain(mesh,id,-w-1,w+1,-d-1,d+1,color,0,1.8,ceiling);
+    for (const direction of ["north","east","south","west"]) {
+      const [dx,dz]=Cave.directions[direction];
+      const potential = dx ? w : d, lateral = dx ? d : w;
+      const opening = Cave.rooms[id].exits[direction] || (direction==="north"&&Cave.rooms[id].exits.up);
+      const count = Math.ceil(lateral*2/1.35);
+      const makePoint = (u,y,r)=>[dx*(potential+r)+dz*u,y,dz*(potential+r)-dx*u];
+      for (let i=0;i<count;i++) {
+        const start=-lateral+i/count*lateral*2, end=-lateral+(i+1)/count*lateral*2;
+        const a=makePoint(start,-.24,.2), b=makePoint(end,-.24,.2);
+        const c=makePoint(end,3.13,.21), e=makePoint(start,3.13,.21);
+        const topA=makePoint(start,8.6,.4), topB=makePoint(end,8.6,.4);
+        const split=makePoint((start+end)/2,1.25,-mesh.r()*.7);
+        mesh.quad(e,c,topB,topA,color,0,.33);
+        if (opening && Math.abs((start+end)/2)<1.71) continue;
+        mesh.tri(a,b,split,color,0,.34);
+        mesh.tri(b,c,split,color,0,.34);
+        mesh.tri(c,e,split,color,0,.34);
+        mesh.tri(e,a,split,color,0,.34);
+        const base=makePoint((start+end)/2,.45,-.55);
+        mesh.rock(...base,.65,.85+mesh.r()*.42,.72,mesh.tint(color,.33),0,6);
+      }
+    }
+    for (const direction of Object.keys(Cave.rooms[id].exits)) arch(mesh,id,direction,color);
+    for (let i=0;i<94;i++) {
+      const x=(mesh.r()-.5)*(w*2-2.7),z=(mesh.r()-.5)*(d*2-2.5);
+      if (Math.abs(x)<2.15 || Math.abs(z)<1.65 || (id==="fissure" && x<2.9 && x>-2.95)) continue;
+      const width = .25 + mesh.r()*.8;
+      mesh.rock(x,.18,z,width,.22+mesh.r()*.53,width*.73,mesh.tint(color,.31));
+      if (i%3===0) {
+        const y=ceiling(x,z)+.15, h=.65+mesh.r()*2.15;
+        mesh.tube([x,y,z],[x+(mesh.r()-.5)*.72,y-h,z+.25],width*.71,.015,color,0,6,.75);
+      }
+    }
+    if (id==="debris") {
+      mesh.rock(-1.5,.19,-2.1,.81,.43,.65,color);
+      mesh.rock(-4.4,.89,-3.7,1.16,2.05,.61,"948171");
+      mesh.tube([2,.14,-2],[4,.29,-4],.19,.13,"614737",2,7,.4);
+    }
+    if (id==="bird") {
+      terrain(mesh,id,-5.6,-.65,1.7,5.4,"3e706b",5,1.1,()=>.018);
+      mesh.rock(1.2,.63,-3.25,1.82,1.28,1.4,"7d8a72");
+      mesh.solid(1.2,-3.25,1.5,1.25);
+    }
+    if (id==="hall") {
+      for (const [x,z] of [[-6,-3.1],[-5,4.6],[5.7,-4.2],[4.8,4.1],[8.9,-5.6],[-8.8,-5.8]]) {
+        const h=7.4+mesh.r()*.9;
+        mesh.tube([x,0,z],[x+.42,h*.48,z-.22],1.38,.69,color,0,9,.74);
+        mesh.tube([x+.42,h*.48,z-.22],[x+.18,h,z+.19],.69,1.5,color,0,9,.69);
+        mesh.solid(x,z,1.45,1.5);
+      }
+      mesh.rock(-3.4,.27,1.1,.81,.65,.65,color);
+    }
+    if (id==="fissure") {
+      mesh.rock(-3.4,.29,-2.5,.82,.65,.69,color);
+      for (let i=0;i<26;i++) {
+        const x=(i%2?-1:1)*(2.15+mesh.r()*1.73),z=(mesh.r()-.5)*15.9;
+        if (Math.abs(z)<1.5) continue;
+        crystal(mesh,x,0,z,.39+mesh.r()*.92,"5eabae");
+      }
+      if (state.bridge) {
+        mesh.box(-.19,-.07,0,4.3,.17,2.45,"6dbabd",6);
+        for (let i=0;i<7;i++) {
+          crystal(mesh,-2+i*.61,-.15,-1.15,.55+mesh.r()*.38,"71d0cf");
+          crystal(mesh,-2+i*.61,-.15,1.15,.55+mesh.r()*.38,"71d0cf");
+        }
+      }
+    }
+    if (id==="vault") {
+      terrain(mesh,id,1.6,6.5,-3.6,3.7,"356c67",5,1.2,()=>.021);
+      mesh.rock(3.2,.3,-.65,1,.78,.86,"889b83");
+      for (let i=0;i<27;i++) {
+        const x=(mesh.r()-.5)*16,z=(mesh.r()-.5)*14;
+        if (Math.abs(z)<1.5 && x<5) continue;
+        crystal(mesh,x,.03,z,.45+mesh.r()*2.1,i%3===0?"aead87":"79a89b");
+      }
+    }
+  }
+
+  function crystal(mesh,x,y,z,height,color) {
+    const base=[x,y,z],mid=[x+height*.22,y+height*.72,z-.07],top=[x+height*.34,y+height,z+.03];
+    mesh.tube(base,mid,height*.21,height*.16,color,6,5,.18);
+    mesh.tube(mid,top,height*.16,0,color,6,5,.10);
+  }
+
+  function grate(mesh,[x,y,z],open) {
+    const edge="737a6c", steel="383f39";
+    mesh.box(x,.08,z,3.37,.26,2.85,edge);
+    mesh.box(x,.221,z,2.86,.05,2.46,"182522",4);
+    for (const offset of [-1.26,1.26]) mesh.box(x+offset,.28,z,.12,.16,2.54,steel,7);
+    if (open) {
+      mesh.box(x,.28,z-1.24,2.58,.13,.14,steel,7);
+      mesh.box(x,1.56,z+1.25,2.58,.11,.13,steel,7);
+      for (let i=0;i<8;i++) mesh.box(x-1.12+i*.32,1,z+1.25,.07,1.31,.07,steel,7);
+      for (let i=0;i<4;i++) mesh.box(x,.25+i*.23,z+.65,1.04,.075,.10,"9b8b5e",7);
+    } else {
+      for (let i=0;i<8;i++) mesh.box(x-1.12+i*.32,.30,z,.069,.075,2.45,steel,7);
+      for (const offset of [-1.23,0,1.23]) mesh.box(x,.31,z+offset,2.6,.11,.09,steel,7);
+      mesh.box(x+.26,.38,z-.87,.3,.19,.20,"a18748",7);
+    }
+  }
+
+  function renderProp(mesh, prop, state) {
+    const [x,y,z]=prop.point;
+    const base=ground(state.room,x,z)+y;
+    const box=(dx,dy,dz,w,h,d,color,material=0,angle=0)=>mesh.box(x+dx,base+dy,z+dz,w,h,d,color,material,angle);
+    const tube=(a,b,r1,r2,color,material=0,faces=8)=>mesh.tube(add([x,base,z],a),add([x,base,z],b),r1,r2,color,material,faces);
+    switch (prop.id) {
+      case "keys":
+        box(.10,.02,.03,.47,.043,.075,"d3aa53",7,-.28);
+        box(.24,.018,.15,.072,.045,.14,"ddbc6f",7,-.28);
+        tube([-.12,.012,-.02],[-.12,.047,-.02],.13,.11,"b89143",7);
+        break;
+      case "lamp":
+        tube([0,-.04,0],[0,.13,0],.23,.19,"9b6e35",7);
+        tube([0,.12,0],[0,.51,0],.16,.17,state.lampLit?"f5cb79":"9d8c62",state.lampLit?4:7);
+        tube([0,.51,0],[0,.60,0],.23,.13,"5e4b35",7);
+        for (const i of [-1,1]) box(i*.156,.32,0,.037,.40,.043,"615139",7);
+        break;
+      case "cage":
+        tube([0,-.055,0],[0,.02,0],.30,.30,"a47f45",2,9);
+        tube([0,.49,0],[0,.61,0],.29,.13,"ac8e52",2,9);
+        for (let i=0;i<12;i++) {
+          const angle=i/12*TAU;
+          box(Math.sin(angle)*.27,.255,Math.cos(angle)*.27,.036,.49,.035,"a98a56",2);
+        }
+        if (state.bird==="caged") mesh.rock(x,base+.16,z,.095,.20,.14,"c6ab5f",3,6);
+        break;
+      case "rod":
+        tube([-.56,.09,-.22],[.57,.105,.25],.053,.045,"514b41",7,6);
+        mesh.rock(x+.58,base+.105,z+.25,.125,.13,.10,"a28b61",7,6);
+        break;
+      case "gold":
+        mesh.rock(x,base+.17,z,.38,.46,.32,"d6ae4a",7);
+        break;
+      case "silver":
+        box(0,.11,0,.57,.21,.37,"b5cbd0",7,.21);
+        box(0,.226,0,.46,.053,.29,"c4d2cc",7,.21);
+        break;
+      case "crystal":
+        crystal(mesh,x,base,z,.81,"b6e5cd");
+        crystal(mesh,x+.28,base,z+.1,.52,"a1c6bf");
+        break;
+      case "inscription":
+        box(0,.08,.29,1.08,.5,.11,"41382e",2);
+        for (const [dx, size] of [[-.36,.15],[-.12,.1],[.12,.15],[.37,.16]]) {
+          box(dx,.16,.36,size,.045,.02,"c0a47c",4,-.08);
+          box(dx-.05,.066,.36,.045,.15,.025,"c0a47c",4);
+          box(dx,-.007,.358,size,.033,.023,"c0a47c",4);
+        }
+        break;
+      case "bird":
+        mesh.rock(x,base+.065,z,.15,.25,.2,"d1b876",3,6);
+        mesh.rock(x-.105,base+.23,z-.11,.107,.135,.106,"dfc781",3,6);
+        tube([-.15,.22,-.155],[-.245,.20,-.211],.044,0,"bf8641",3,5);
+        tube([.08,.085,.10],[.29,.045,.26],.1,.02,"826e4e",3,5);
+        break;
+      case "snake": {
+        const points=Array.from({length:18},(_, i)=>[x+Math.sin(i*.82)*.47,.105+Math.pow(i/17,6)*.58,z-1.13+i*.133]);
+        for (let i=0;i<points.length-1;i++) mesh.tube(points[i],points[i+1],.075+i*.006,.081+i*.006,i%3===0?"b2a879":"79815b",3,8);
+        mesh.rock(points[17][0],points[17][1],points[17][2],.23,.24,.27,"9aa674",3,7);
+        break;
+      }
+    }
+  }
+
+  const vertexSource = `
+    attribute vec3 aPosition;
+    attribute vec3 aNormal;
+    attribute vec3 aColor;
+    attribute float aSurface;
+    uniform mat4 uView, uProjection;
+    varying vec3 vPoint, vNormal, vColor;
+    varying float vSurface;
+    void main(){
+      vPoint=aPosition; vNormal=aNormal; vColor=aColor; vSurface=aSurface;
+      gl_Position=uProjection*uView*vec4(aPosition,1.);
+    }`;
+  const fragmentSource = `
+    precision highp float;
+    varying vec3 vPoint, vNormal, vColor;
+    varying float vSurface;
+    uniform vec3 uEye, uForward, uFog, uLampPosition;
+    uniform float uMode, uLamp, uCarried, uTime;
+    float hash(vec3 p){
+      p=fract(p*.3183099+vec3(.11,.27,.43));
+      p*=17.;
+      return fract(p.x*p.y*p.z*(p.x+p.y+p.z));
+    }
+    float noise(vec3 p){
+      vec3 cell=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+      return mix(mix(mix(hash(cell),hash(cell+vec3(1,0,0)),f.x),mix(hash(cell+vec3(0,1,0)),hash(cell+vec3(1,1,0)),f.x),f.y),
+        mix(mix(hash(cell+vec3(0,0,1)),hash(cell+vec3(1,0,1)),f.x),mix(hash(cell+vec3(0,1,1)),hash(cell+vec3(1,1,1)),f.x),f.y),f.z);
+    }
+    void main(){
+      vec3 n=normalize(gl_FrontFacing?vNormal:-vNormal);
+      vec3 p=vPoint;
+      vec3 travel=p-uEye;
+      float distance=length(travel);
+      vec3 ray=travel/max(.01,distance);
+      float broad=noise(p*1.7);
+      float grain=noise(p*24.);
+      float fine=noise(p*7.3);
+      float textureValue=.74+broad*.26+fine*.24+grain*.19;
+      vec3 color=vColor;
+      if(vSurface>.5 && vSurface<1.5) {
+        textureValue=.59+broad*.36+fine*.29+grain*.33;
+        color=mix(color,color*vec3(.80,.85,.58),smoothstep(.58,.76,noise(p*.57))*.61);
+      }
+      if(vSurface>1.5 && vSurface<2.5) textureValue=.68+noise(p*vec3(10.,1.3,23.))*.55;
+      if(vSurface>2.5 && vSurface<3.5) textureValue=.68+broad*.35+grain*.24;
+      if(vSurface<.5) color*=.83+smoothstep(.05,.96,noise(p*vec3(1.8,4.,1.9)))*.31;
+      float sun=max(0.,dot(n,normalize(vec3(-.49,.77,-.28))));
+      vec3 lighting;
+      if(uMode>1.5){
+        float glow=exp(-length(p-vec3(2.52,1.,-2.35))*.20);
+        float door=exp(-length(p-vec3(-7.,1.,0.))*.22);
+        lighting=vec3(.41,.39,.33)+vec3(.96,.69,.38)*glow*.58+vec3(.52,.65,.47)*door*.54+sun*.14;
+      } else if(uMode>.5){
+        vec3 source=uLampPosition;
+        vec3 toLight=source-p;
+        float cone=mix(1.,smoothstep(.37,.97,dot(ray,uForward))*.57+.43,uCarried);
+        float intensity=cone*1.34/(1.+.025*dot(toLight,toLight));
+        float direct=max(.23,dot(n,normalize(toLight)));
+        lighting=vec3(.16,.22,.23)+vec3(.19,.22,.19)*sun*.21+vec3(1.25,.94,.60)*intensity*(.56+.52*direct)*uLamp;
+        if(uLamp<.5) lighting*=.21;
+      } else {
+        float mottled=smoothstep(.36,.71,noise(p*vec3(.31,.42,.33)+vec3(1.,2.,3.)));
+        lighting=vec3(.57,.67,.61)+vec3(.71,.56,.33)*sun*(.51+mottled*.39);
+      }
+      vec3 result=color*textureValue*lighting;
+      if(vSurface>3.5 && vSurface<4.5) result=color*(.79+grain*.12);
+      if(vSurface>4.5 && vSurface<5.5){
+        float ripple=sin(p.z*32.+sin(p.x*18.)*1.6+uTime*1.6)*.5+.5;
+        float streak=smoothstep(.79,.98,noise(p*vec3(19.,4.,46.)+vec3(0.,0.,uTime*.21))+ripple*.22);
+        result=mix(color*lighting*.75,uFog, .17)+streak*vec3(.17,.24,.23);
+      }
+      if(vSurface>5.5 && vSurface<6.5){
+        float glint=pow(1.-abs(dot(n,ray)),3.);
+        result+=color*(.13+.45*glint+smoothstep(.65,.85,grain)*.15)*max(.12,uLamp);
+      }
+      if(vSurface>6.5) result+=vec3(.29,.25,.16)*pow(max(0.,dot(reflect(ray,n),normalize(vec3(-.8,1.,-.2)))),9.)*(uMode<.5?1.:uLamp*.86);
+      float fog=(1.-exp(-distance*(uMode<.5?.039:uMode>1.5?.018:.058)));
+      vec3 fogColor=uFog;
+      if(uMode<.5) fogColor=mix(uFog,vec3(.53,.59,.48),smoothstep(-.17,.25,ray.y)*.7);
+      result=mix(result,fogColor,fog*(uMode<.5?.94:.76));
+      gl_FragColor=vec4(pow(max(result,vec3(0.)),vec3(.93)),1.);
+    }`;
+
+  function basis(yaw, pitch) {
+    const forward=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch)];
+    const right=[Math.cos(yaw),0,Math.sin(yaw)];
+    return { forward, right, up: cross(right,forward) };
+  }
+
+  function viewMatrix(eye, forward, right, up) {
+    return new Float32Array([
+      right[0],up[0],-forward[0],0,right[1],up[1],-forward[1],0,right[2],up[2],-forward[2],0,
+      -dot(eye,right),-dot(eye,up),dot(eye,forward),1
+    ]);
+  }
+
+  class Scene {
+    constructor(canvas) {
+      this.canvas=canvas;
+      this.gl=canvas.getContext("webgl",{alpha:false,antialias:true,powerPreference:"high-performance"});
+      if (!this.gl) return;
+      const gl=this.gl;
+      const program=gl.createProgram();
+      for (const [kind,code] of [[gl.VERTEX_SHADER,vertexSource],[gl.FRAGMENT_SHADER,fragmentSource]]) {
+        const shader=gl.createShader(kind);
+        gl.shaderSource(shader,code);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader));
+        gl.attachShader(program,shader);
+      }
+      gl.linkProgram(program);
+      if (!gl.getProgramParameter(program,gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+      gl.useProgram(program);
+      this.buffer=gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);
+      for (const [key,size,offset] of [["aPosition",3,0],["aNormal",3,12],["aColor",3,24],["aSurface",1,36]]) {
+        const location=gl.getAttribLocation(program,key);
+        gl.enableVertexAttribArray(location);
+        gl.vertexAttribPointer(location,size,gl.FLOAT,false,40,offset);
+      }
+      this.uniforms=Object.fromEntries(["View","Projection","Eye","Forward","Fog","LampPosition","Mode","Lamp","Carried","Time"].map(key=>[key,gl.getUniformLocation(program,"u"+key)]));
+      gl.enable(gl.DEPTH_TEST);
+      this.signature="";
+    }
+
+    sync(state) {
+      const props=Cave.props(state);
+      const signature=JSON.stringify([state.room,state.grateOpen,state.bridge,state.snakeGone,state.bird,state.lampLit,props]);
+      if (signature===this.signature) return;
+      this.signature=signature;
+      const mesh=new Mesh(state.room);
+      if (outdoors(state.room)) forest(mesh,state.room,state);
+      else if (state.room==="well") wellhouse(mesh);
+      else grotto(mesh,state.room,state);
+      for (const prop of props) renderProp(mesh,prop,state);
+      this.room=state.room;
+      this.obstacles=mesh.obstacles;
+      if (!this.gl) return;
+      this.gl.bufferData(this.gl.ARRAY_BUFFER,new Float32Array(mesh.vertices),this.gl.STATIC_DRAW);
+      this.count=mesh.vertices.length/10;
+    }
+
+    openPosition(room, direction) {
+      const start = Cave.rooms[room].start || [0,2.25,0];
+      if (!direction || !Cave.rooms[room].exits[direction]) return [start[0],start[1],start[2],-.025];
+      const [vx,vz]=Cave.directions[direction];
+      const [x,,z]=Cave.portal(room,direction);
+      const inner=room==="road"&&direction==="east"?4.0:2.35;
+      const yaw=Math.atan2(-vx,vz)+(room==="well"?.27:room==="debris"?.19:0);
+      return [x-vx*inner,z-vz*inner,yaw,-.01];
+    }
+
+    tryWalk(state, player, x, z) {
+      const [w,d]=Cave.rooms[state.room].size;
+      if (state.room==="fissure" && x>-1.82 && x<1.42 && (!state.bridge || Math.abs(z)>1.06)) {
+        return { restricted: "east" };
+      }
+      if (state.room==="hall" && !state.snakeGone && x>6.1 && Math.abs(z)<2.25) return { restricted: "east" };
+      if (this.obstacles?.some(([x0,x1,z0,z1])=>x>x0-.2&&x<x1+.2&&z>z0-.2&&z<z1+.2)) return {};
+      if (state.room==="grate" && z>6.3 && z<7.5 && Math.abs(x)<1.19 && Math.hypot(x-player.x,z-player.z)>.001) return { exit:"down" };
+      if (state.room==="road" && x>8.3 && Math.abs(z)<.77) return { exit:"east" };
+      const edge = x>=w-.45 && Math.abs(z)<1.48?"east":x<=-w+.45&&Math.abs(z)<1.48?"west":
+        z>=d-.45&&Math.abs(x)<1.48?"south":z<=-d+.45&&Math.abs(x)<1.48?"north":null;
+      if (edge) {
+        const exits=Cave.rooms[state.room].exits;
+        const result=exits[edge]?edge:edge==="north"&&exits.up?"up":null;
+        if (result) return {exit:result};
+      }
+      if (Math.abs(x)>=w-.45 || Math.abs(z)>=d-.45) return {};
+      return { x, z };
+    }
+
+    draw(state, player, time) {
+      if (!this.gl) return;
+      const gl=this.gl, canvas=this.canvas, u=this.uniforms;
+      const aspect=canvas.clientWidth/Math.max(1,canvas.clientHeight);
+      const ratio=Math.min(window.devicePixelRatio||1,1.5,1260/Math.max(1,canvas.clientWidth));
+      const width=Math.max(1,Math.round(canvas.clientWidth*ratio)), height=Math.max(1,Math.round(canvas.clientHeight*ratio));
+      if (canvas.width!==width || canvas.height!==height) { canvas.width=width; canvas.height=height; }
+      const focal=1/Math.tan(radians(aspect<1.15?62:57)/2);
+      const fovScaleX=aspect < 1.08 ? focal/1.08 : focal/aspect;
+      const eye=[player.x,ground(state.room,player.x,player.z)+1.67+player.bob,player.z];
+      const orientation=basis(player.yaw,player.pitch);
+      this.camera={eye,...orientation,focal,fovScaleX};
+      const mode=outdoors(state.room)?0:state.room==="well"?2:1;
+      const fog=mode===0?[.47,.54,.465]:mode===2?[.124,.131,.093]:Cave.light(state)?[.080,.108,.101]:[.013,.021,.022];
+      const lampItem=Cave.props(state).find(prop=>prop.id==="lamp");
+      const handLamp=add(eye,add(scale(orientation.right,.24),[0,-.33,0]));
+      const lampPosition=lampItem?add(lampItem.point,[0,.35,0]):handLamp;
+      gl.viewport(0,0,width,height);
+      gl.clearColor(...fog,1);
+      gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+      gl.uniformMatrix4fv(u.View,false,viewMatrix(eye,orientation.forward,orientation.right,orientation.up));
+      gl.uniformMatrix4fv(u.Projection,false,new Float32Array([fovScaleX,0,0,0,0,focal,0,0,0,0,-1.0011,-1,0,0,-.106,0]));
+      gl.uniform3fv(u.Eye,eye);
+      gl.uniform3fv(u.Forward,orientation.forward);
+      gl.uniform3fv(u.Fog,fog);
+      gl.uniform3fv(u.LampPosition,lampPosition);
+      gl.uniform1f(u.Mode,mode);
+      gl.uniform1f(u.Lamp,Cave.light(state)?1:0);
+      gl.uniform1f(u.Carried,lampItem?0:1);
+      gl.uniform1f(u.Time,time*.001);
+      gl.drawArrays(gl.TRIANGLES,0,this.count);
+    }
+
+    project(point) {
+      if (!this.camera) return null;
+      const {eye,forward,right,up,focal,fovScaleX}=this.camera;
+      const ray=sub(point,eye), length=dot(ray,forward);
+      if (length<.24) return null;
+      return [.5+.5*fovScaleX*dot(ray,right)/length,.5-.5*focal*dot(ray,up)/length,Math.hypot(...ray)];
+    }
+  }
+
+  globalThis.CaveScene={ Scene, TAU, clamp };
+})();
+
+(function () {
+  "use strict";
+
+  const byId = id => document.getElementById(id);
+  const canvas = byId("scene");
+  const viewport = byId("viewport");
+  const log = byId("log");
+  const commandInput = byId("command");
+  const dialog = byId("dialog");
+  const markers = byId("markers");
+  const interact = byId("interact");
+  const keys = new Set();
+  const history = [];
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const cardinal = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const pad = (value, length = 2) => String(value).padStart(length, "0");
+  const player = { x: 0, z: 0, yaw: 0, pitch: 0, bob: 0, step: 0 };
+  let state = Cave.loadState({ getItem: key => localStorage.getItem(key) });
+  let scene, audio, ambience, ambGain, sound = false;
+  let activeMarker, previousBlocked, pointer, historyIndex = 0, lastFrame = 0, lastCompass = -999;
+  let markersData = [];
+  let lastPositionSave = 0;
+
+  try { scene = new CaveScene.Scene(canvas); }
+  catch (error) { console.warn("WebGL scene unavailable", error); }
+  if (!scene?.gl) {
+    const fallback = document.createElement("p");
+    fallback.className = "scene-fallback";
+    fallback.textContent = "The 3D view is unavailable in this browser. You can still explore with commands below.";
+    viewport.append(fallback);
+  }
+
+  function append(text, style = "") {
+    if (!text) return;
+    const line = document.createElement("p");
+    line.className = style;
+    line.textContent = text;
+    log.append(line);
+    while (log.children.length > 90) log.firstElementChild.remove();
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function resetCamera(entry, restore = false) {
+    const start = scene?.openPosition(state.room, entry) || [0, 0, 0, 0];
+    const saved = restore ? state.view : null;
+    const [x, z, yaw, pitch] = Array.isArray(saved) && saved.length === 4 && saved.every(Number.isFinite) ? saved : start;
+    Object.assign(player, { x, z, yaw, pitch, bob: 0, step: 0 });
+    previousBlocked = null;
+    lastCompass = -999;
+  }
+
+  function save() {
+    state.view = [player.x, player.z, player.yaw, player.pitch];
+    try {
+      localStorage.setItem("bedquilt-progress-v1", JSON.stringify(state));
+      byId("save-status").textContent = "PROGRESS SAVED ON THIS DEVICE";
+    } catch {
+      byId("save-status").textContent = "PROGRESS AVAILABLE FOR THIS TAB";
+    }
+  }
+
+  function playTone(frequency, end, duration, volume, delay = 0) {
+    if (!sound || !audio) return;
+    const start = audio.currentTime + delay;
+    const oscillator = audio.createOscillator();
+    const gain = audio.createGain();
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, start);
+    oscillator.frequency.exponentialRampToValueAtTime(end, start + duration);
+    gain.gain.setValueAtTime(.001, start);
+    gain.gain.linearRampToValueAtTime(volume, start + .022);
+    gain.gain.exponentialRampToValueAtTime(.001, start + duration);
+    oscillator.connect(gain).connect(audio.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration + .02);
+  }
+
+  function setAmbience() {
+    if (!audio || !ambGain) return;
+    ambience.frequency.setTargetAtTime(Cave.rooms[state.room].depth > 5 ? 178 : 365, audio.currentTime, .2);
+    ambGain.gain.setTargetAtTime(sound ? .085 : 0, audio.currentTime, .09);
+  }
+
+  async function toggleAudio() {
+    if (!audio) {
+      const Context = window.AudioContext || window.webkitAudioContext;
+      if (!Context) { append("Audio is unavailable in this browser."); return; }
+      audio = new Context();
+      const noise = audio.createBuffer(1, audio.sampleRate * 3, audio.sampleRate);
+      const samples = noise.getChannelData(0);
+      for (let i=0;i<samples.length;i++) samples[i]=Math.random()*2-1;
+      const source=audio.createBufferSource();
+      ambience=audio.createBiquadFilter();
+      ambGain=audio.createGain();
+      ambGain.gain.value=0;
+      ambience.type="lowpass";
+      source.buffer=noise;
+      source.loop=true;
+      source.connect(ambience).connect(ambGain).connect(audio.destination);
+      source.start();
+    }
+    try { await audio.resume(); }
+    catch { append("This browser couldn't start audio."); return; }
+    sound=!sound;
+    byId("audio").setAttribute("aria-pressed", String(sound));
+    byId("audio-label").textContent=sound?"Sound on":"Sound off";
+    setAmbience();
+    if (sound) playTone(325, 260, .15, .032);
+  }
+
+  function showPanel(panel) {
+    const title = byId("dialog-title"), content=byId("dialog-body");
+    if (panel === "map") {
+      title.textContent="Expedition Map";
+      content.replaceChildren();
+      const grid=document.createElement("div");
+      grid.className="map-grid";
+      grid.setAttribute("aria-label", "Map with north at the top");
+      for (const id of state.visited) {
+        const room=Cave.rooms[id];
+        if (!room) continue;
+        const node=document.createElement("div");
+        node.className=id===state.room?"map-room current":"map-room";
+        node.style.gridColumn=room.map[0];
+        node.style.gridRow=room.map[1];
+        node.textContent=room.name;
+        if (id===state.room) node.setAttribute("aria-current","location");
+        grid.append(node);
+      }
+      const note=document.createElement("p");
+      note.textContent="North is up. New locations appear as you explore.";
+      content.append(grid,note);
+    } else if (panel === "reset") {
+      title.textContent="Start a New Expedition?";
+      content.innerHTML='<p>This clears the current map, inventory, and treasure count on this device.</p><div class="dialog-actions"><button class="primary" id="confirm-reset" type="button">Start over</button><form method="dialog"><button class="quiet">Keep playing</button></form></div>';
+      byId("confirm-reset").addEventListener("click", () => {
+        dialog.close();
+        state=Cave.newState();
+        history.length=historyIndex=0;
+        log.replaceChildren();
+        resetCamera();
+        append(Cave.describe(state));
+        refresh();
+        save();
+        flashScene();
+        canvas.focus({preventScroll:true});
+      });
+    } else {
+      title.textContent="How to Explore";
+      content.innerHTML='<p><strong>Walk and look.</strong> Use <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to move. Drag the view or use the arrow keys to look around. Press <kbd>E</kbd> near a highlighted object or click its label. On touchscreens, drag to look and use the directional pad to walk.</p><p><strong>Type an action.</strong> Press <kbd>/</kbd> to focus the prompt. Try <kbd>LOOK</kbd>, <kbd>GO EAST</kbd>, <kbd>TAKE LAMP</kbd>, <kbd>INVENTORY</kbd>, or <kbd>HINT</kbd>. Press <kbd>↑</kbd> in the prompt to recall commands.</p><p><strong>Finish the expedition.</strong> Find all three treasures and <kbd>DROP TREASURE</kbd> in the wellhouse to store them.</p><div class="dialog-actions"><button id="new-game" type="button" class="quiet">New expedition…</button></div>';
+      byId("new-game").addEventListener("click",()=>showPanel("reset"));
+    }
+    keys.clear();
+    if (!dialog.open) dialog.showModal();
+  }
+
+  function flashScene() {
+    const fade=byId("fade");
+    fade.classList.remove("flash");
+    void fade.offsetWidth;
+    fade.classList.add("flash");
+  }
+
+  function run(raw, source = "command") {
+    const value=raw.trim();
+    if (!value) return;
+    if (source==="command") {
+      if (history.at(-1)!==value) history.push(value);
+      if (history.length>75) history.shift();
+      historyIndex=history.length;
+    }
+    if (source!=="walk") append("› "+value, "command-echo");
+    const [width,depth]=Cave.rooms[state.room].size;
+    const dropPosition={
+      x:CaveScene.clamp(player.x+Math.sin(player.yaw)*.75,-width+.65,width-.65),
+      z:CaveScene.clamp(player.z-Math.cos(player.yaw)*.75,-depth+.65,depth-.65)
+    };
+    const result=Cave.execute(state,value,dropPosition);
+    append(result.text,result.kind);
+    if (result.moved) {
+      resetCamera(result.entry);
+      flashScene();
+      setAmbience();
+      playTone(132,75,.31,.065);
+    } else if (result.won) {
+      [262,330,392,523].forEach((note,i)=>playTone(note,note*1.01,.35,.064,i*.10));
+    } else if (result.kind==="good") playTone(305,370,.16,.037);
+    refresh();
+    save();
+    if (result.panel) showPanel(result.panel);
+    return result;
+  }
+
+  function setMarker(target, style, verb, label, title, point, id) {
+    const element=document.createElement("button");
+    const symbol=document.createElement("span");
+    element.type="button";
+    element.className="marker";
+    element.title=title;
+    element.setAttribute("aria-label",title);
+    symbol.setAttribute("aria-hidden","true");
+    symbol.textContent=style==="exit"?"↗":"◇";
+    element.append(symbol,document.createTextNode(label));
+    element.hidden=true;
+    element.tabIndex=-1;
+    element.addEventListener("click",()=>{
+      run(verb,"object");
+      canvas.focus({preventScroll:true});
+    });
+    target.append(element);
+    return {element,style,verb,label,title,point,id};
+  }
+
+  function refreshMarkers() {
+    markers.replaceChildren();
+    markersData=[];
+    activeMarker=null;
+    interact.hidden=true;
+    if (!scene?.gl || Cave.movingInDark(state)) return;
+    const frag=document.createDocumentFragment();
+    if (state.room==="road") {
+      markersData.push(setMarker(frag,"exit","east","Wellhouse","Enter the wellhouse",[5.0,2.45,0],"east"));
+      markersData.push(setMarker(frag,"exit","south","Streambed","Follow the stream",[.85,1.24,4.05],"south"));
+    } else {
+      for (const [direction,destination] of Object.entries(Cave.rooms[state.room].exits)) {
+        if (direction==="down") continue;
+        const point=Cave.portal(state.room,direction);
+        const label=direction==="up"?"Ladder out":Cave.rooms[destination].name;
+        markersData.push(setMarker(frag,"exit",direction,label,"Go "+direction+" to "+label,point,direction));
+      }
+    }
+    for (const info of Cave.props(state)) {
+      const point=info.point.slice();
+      point[1]+=info.id==="bird"||info.id==="cage"||info.id==="lamp"||info.id==="crystal"?.60:.38;
+      const title={grate:state.grateOpen?"Descend":"Open grate",inscription:"Read inscription",chasm:info.command==="wave rod"?"Wave rod":"Inspect chasm",bird:"Catch bird",snake:info.command==="release bird"?"Release bird":"Inspect snake"}[info.id] || "Take "+info.label.toLowerCase();
+      markersData.push(setMarker(frag,"object",info.command,info.label,title,point,info.id));
+    }
+    markers.append(frag);
+  }
+
+  function refresh() {
+    const room=Cave.rooms[state.room];
+    const count=Cave.total(state);
+    byId("region").textContent=room.region.toUpperCase();
+    byId("location").textContent=room.name;
+    byId("depth").textContent=pad(room.depth,3)+" m";
+    byId("objective").textContent=Cave.objective(state);
+    byId("score").textContent=count+" / 3 recovered";
+    Array.from(byId("progress-marks").children).forEach((mark,i)=>mark.classList.toggle("filled",i<count));
+    byId("turns").textContent="TURN "+pad(state.turns,3);
+    const carried=Cave.carried(state);
+    byId("item-count").textContent=pad(carried.length);
+    const inventory=byId("inventory");
+    inventory.replaceChildren();
+    if (!carried.length) {
+      const empty=document.createElement("div");
+      empty.className="empty";
+      empty.textContent="Your pack is empty.";
+      inventory.append(empty);
+    }
+    for (const id of carried) {
+      const item=Cave.items[id], button=document.createElement("button"), icon=document.createElement("b");
+      button.className="item";
+      button.type="button";
+      button.title="Inspect "+item.name.toLowerCase();
+      icon.textContent=item.icon;
+      icon.setAttribute("aria-hidden","true");
+      button.append(icon,document.createTextNode(item.name));
+      const status=(id==="lamp"&&state.lampLit)?"LIT":(id==="cage"&&state.bird==="caged")?"BIRD":"";
+      if (status) { const badge=document.createElement("em"); badge.textContent=status; button.append(badge); }
+      button.addEventListener("click",()=>run("inspect "+id,"inventory"));
+      inventory.append(button);
+    }
+    const actions=byId("actions");
+    actions.replaceChildren();
+    for (const [verb,label] of Cave.suggestions(state)) {
+      const button=document.createElement("button");
+      button.type="button";
+      button.textContent=label;
+      button.addEventListener("click",()=>{
+        run(verb,"button");
+        const equivalent=Array.from(actions.children).find(next=>next.textContent===label);
+        (equivalent || commandInput).focus({preventScroll:true});
+      });
+      actions.append(button);
+    }
+    scene?.sync(state);
+    refreshMarkers();
+  }
+
+  function compass() {
+    const yaw=((player.yaw/CaveScene.TAU*360)%360+360)%360;
+    if (Math.abs(yaw-lastCompass)<1.25) return;
+    lastCompass=yaw;
+    const wrap=byId("bearings");
+    wrap.replaceChildren();
+    for(let i=-2;i<13;i++) {
+      const delta=i*45-yaw;
+      if(Math.abs(delta)>83) continue;
+      const label=document.createElement("span");
+      label.style.left=(50+delta*.77)+"%";
+      label.textContent=cardinal[(i+8)%8];
+      wrap.append(label);
+    }
+    wrap.parentElement.setAttribute("aria-label","Facing "+cardinal[Math.round(yaw/45)%8]);
+  }
+
+  function placeMarkers() {
+    const visible=[];
+    let candidate=null;
+    let score=.22;
+    const width=markers.clientWidth,height=markers.clientHeight;
+    for(const marker of markersData) {
+      const hit=scene?.project(marker.point);
+      marker.element.hidden=true;
+      if (!hit) continue;
+      const [x,y,d]=hit;
+      if(x<.07||x>.93||y<.12||y>.87) continue;
+      const current=Math.hypot((x-.5)*1.14,y-.5);
+      if (d<5.9 && current<score) {candidate=marker;score=current;}
+      visible.push({marker,x:x*width,y:y*height,d});
+    }
+    visible.sort((a,b)=>a.d-b.d);
+    const placed=[];
+    for(const {marker,x,y} of visible) {
+      if (placed.some(([u,v])=>Math.abs(u-x)<92&&Math.abs(v-y)<23)) continue;
+      marker.element.hidden=false;
+      marker.element.style.left=x+"px";
+      marker.element.style.top=y+"px";
+      placed.push([x,y]);
+    }
+    if (activeMarker!==candidate) {
+      activeMarker=candidate;
+      interact.hidden=!candidate;
+      if (candidate) {
+        const shortcut=document.createElement("kbd");
+        shortcut.textContent="E";
+        interact.replaceChildren(shortcut,document.createTextNode(candidate.title));
+      }
+    }
+  }
+
+  function walk(dt,time) {
+    const forward=Number(keys.has("w"))-Number(keys.has("s"));
+    const side=Number(keys.has("d"))-Number(keys.has("a"));
+    player.yaw+=(Number(keys.has("arrowright"))-Number(keys.has("arrowleft")))*dt*1.64;
+    player.pitch=CaveScene.clamp(player.pitch+(Number(keys.has("arrowup"))-Number(keys.has("arrowdown")))*dt*1.23,-1.22,1.22);
+    if (!scene?.gl || (!forward&&!side)) {player.bob*=.81; return;}
+    const stride=dt*(keys.has("shift")?6.2:3.8)/Math.hypot(forward,side);
+    const dx=(Math.sin(player.yaw)*forward+Math.cos(player.yaw)*side)*stride;
+    const dz=(-Math.cos(player.yaw)*forward+Math.sin(player.yaw)*side)*stride;
+    const result=scene.tryWalk(state,player,player.x+dx,player.z+dz);
+    if (result.exit || result.restricted) {
+      const direction=result.exit||result.restricted;
+      const message=Cave.block(state,direction);
+      if (result.exit && !message) { run(direction,"walk"); return; }
+      const notice=message||"The bridge is narrow. Line up with its center before crossing.";
+      if (notice!==previousBlocked) {append(notice,"hint");previousBlocked=notice;}
+      return;
+    }
+    const slide=result.x===undefined ? scene.tryWalk(state,player,player.x+dx,player.z) : result;
+    const step=slide.x===undefined ? scene.tryWalk(state,player,player.x,player.z+dz) : slide;
+    if (step.x===undefined) return;
+    player.x=step.x;player.z=step.z;
+    previousBlocked=null;
+    player.step+=Math.hypot(dx,dz);
+    player.bob=reducedMotion.matches?0:Math.sin(player.step*8.3)*.032;
+    if (time-lastPositionSave>1200) {save();lastPositionSave=time;}
+  }
+
+  function frame(time) {
+    const dt=Math.min(.05,(time-lastFrame)/1000 || .016);
+    lastFrame=time;
+    if (!document.hidden) {
+      if (!dialog.open) walk(dt,time);
+      scene?.draw(state,player,time);
+      compass();
+      placeMarkers();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  byId("command-form").addEventListener("submit",event=>{
+    event.preventDefault();
+    const value=commandInput.value;
+    commandInput.value="";
+    run(value);
+  });
+  commandInput.addEventListener("keydown",event=>{
+    if (event.key==="Escape") {canvas.focus({preventScroll:true});return;}
+    if (!["ArrowUp","ArrowDown"].includes(event.key)||!history.length) return;
+    event.preventDefault();
+    historyIndex=CaveScene.clamp(historyIndex+(event.key==="ArrowUp"?-1:1),0,history.length);
+    commandInput.value=history[historyIndex]||"";
+  });
+  window.addEventListener("keydown",event=>{
+    if (dialog.open || event.altKey || event.ctrlKey || event.metaKey || event.target instanceof HTMLInputElement) return;
+    const key=event.key.toLowerCase();
+    if (key==="/") {event.preventDefault();commandInput.focus();return;}
+    if (event.target instanceof HTMLButtonElement && [" ","enter"].includes(key)) return;
+    if (key==="e"&&!event.repeat&&activeMarker) {
+      event.preventDefault();
+      run(activeMarker.verb,"object");
+      return;
+    }
+    if (["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright","shift"].includes(key)) {
+      event.preventDefault();
+      keys.add(key);
+    }
+  });
+  window.addEventListener("keyup",event=>keys.delete(event.key.toLowerCase()));
+  window.addEventListener("blur",()=>keys.clear());
+  window.addEventListener("pagehide",save);
+  commandInput.addEventListener("focus",()=>keys.clear());
+  canvas.addEventListener("pointerdown",event=>{
+    if (event.button!==0) return;
+    canvas.focus({preventScroll:true});
+    canvas.setPointerCapture(event.pointerId);
+    pointer={id:event.pointerId,x:event.clientX,y:event.clientY};
+  });
+  canvas.addEventListener("pointermove",event=>{
+    if (!pointer || pointer.id!==event.pointerId) return;
+    player.yaw+=(event.clientX-pointer.x)*.0052;
+    player.pitch=CaveScene.clamp(player.pitch-(event.clientY-pointer.y)*.0052,-1.22,1.22);
+    pointer.x=event.clientX;pointer.y=event.clientY;
+  });
+  canvas.addEventListener("lostpointercapture",()=>{if(pointer) save();pointer=null;});
+  for (const button of byId("touch").querySelectorAll("button")) {
+    button.addEventListener("pointerdown",event=>{
+      event.preventDefault();
+      canvas.focus({preventScroll:true});
+      button.setPointerCapture(event.pointerId);
+      keys.add(button.dataset.key);
+    });
+    button.addEventListener("lostpointercapture",()=>keys.delete(button.dataset.key));
+  }
+  byId("fullscreen").addEventListener("click",async()=>{
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await viewport.requestFullscreen();
+    } catch { append("Fullscreen is unavailable in this browser."); }
+  });
+  if (!document.fullscreenEnabled) byId("fullscreen").hidden=true;
+  byId("help").addEventListener("click",()=>showPanel("help"));
+  byId("map").addEventListener("click",()=>showPanel("map"));
+  byId("audio").addEventListener("click",toggleAudio);
+  interact.addEventListener("click",()=>{
+    if (activeMarker) run(activeMarker.verb,"object");
+    canvas.focus({preventScroll:true});
+  });
+  dialog.addEventListener("close",()=>keys.clear());
+
+  resetCamera(undefined,true);
+  append(state.turns?"You resume the expedition.":"Welcome, explorer. Recover three treasures and return them to the wellhouse.");
+  append(Cave.describe(state));
+  refresh();
+  save();
+  requestAnimationFrame(frame);
+})();
+
+</script>
+</body>
+</html>
